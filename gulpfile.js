@@ -4,6 +4,7 @@ const inline = require('gulp-inline');
 const uglify = require('gulp-uglify');
 const minifyCss = require('gulp-minify-css');
 const minHTML = require('gulp-htmlmin');
+const replaceQuotes = require('gulp-replace-quotes');
 
 const origin = 'src';
 const destination = 'dist';
@@ -26,6 +27,11 @@ function build(cb) {
       })
     )
     .pipe(minHTML({ collapseWhitespace: true }))
+    .pipe(
+      replaceQuotes({
+        quote: 'single',
+      })
+    )
     .pipe(gulp.dest(`${destination}/`));
 
   cb();

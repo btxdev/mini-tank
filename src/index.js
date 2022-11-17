@@ -25,9 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     '.btn-left .button',
     () => {
       console.log('turn left');
+      fetch('/left');
     },
     () => {
       console.log('stop');
+      fetch('/stop');
     }
   );
   bind(
