@@ -1,0 +1,75 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+.mark-red {
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid red;
+}
+.mark-cyan {
+  background-color: rgba(0, 255, 255, 0.1);
+  border: 1px solid cyan;
+}
+.buttons-wrapper {
+  position: absolute;
+  width: 90%;
+  height: auto;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+.box {
+  width: 100%;
+  position: relative;
+}
+.box:before {
+  content: '';
+  display: block;
+  padding-top: 100%;
+}
+.box .content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 33% 33% 33%;
+  grid-template-rows: 33% 33% 33%;
+}
+.wrapper {
+  width: 100%;
+  height: 100%;
+  padding: 5%;
+  box-sizing: border-box;
+}
+.button {
+  width: 100%;
+  height: 100%;
+  border-radius: 12%;
+  background-color: #7a8ca0;
+  color: white;
+  font-family: Arial;
+  font-size: 600%;
+  line-height: 92%;
+  text-align: center;
+}
+.active {
+  background-color: #363a3a;
+}
+.btn-left {
+  grid-area: 2 / 1 / 2 / 1;
+  transform: rotate(-90deg);
+}
+.btn-right {
+  grid-area: 2 / 3 / 2 / 3;
+  transform: rotate(90deg);
+}
+.btn-bottom {
+  grid-area: 3 / 2 / 3 / 2;
+  transform: rotate(180deg);
+}
+.btn-top {
+  grid-area: 1 / 2 / 1 / 2;
+}
