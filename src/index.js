@@ -1,17 +1,35 @@
-let globalInterval = {
-  left: undefined,
-  right: undefined,
-  top: undefined,
-  bottom: undefined,
-};
+const waitForResponseTimeout = 2000;
+const gateway = `ws://${window.location.hostname}/ws`;
+const statusElementSelector = '.status';
 
-let intervalMs = 500;
-
-let gateway = `ws://${window.location.hostname}/ws`;
 let websocket;
-
-let statusElementSelector = '.status';
+let waitForResponse;
 let $statusElement;
+
+function redText(msg = 'Соединение потеряно') {
+  $statusElement.classList.remove('greentext');
+  $statusElement.classList.add('redtext');
+  $statusElement.innerText = msg;
+}
+
+function orangeText(msg = 'Подключение...') {
+  $statusElement.classList.remove('greentext');
+  $statusElement.classList.remove('redtext');
+  $statusElement.innerText = msg;
+}
+
+function greenText(msg = 'Подключен') {
+  $statusElement.classList.add('greentext');
+  $statusElement.classList.remove('redtext');
+  $statusElement.innerText = msg;
+}
+
+function waitForResponseFunc() {
+  redText();
+  websocket.close();
+  document.location.reload();
+  clearInterval(waitForResponse);
+}
 
 function isTouchscreen() {
   if (window.matchMedia('(pointer:coarse)').matches) {
@@ -37,9 +55,7 @@ function bind(selector, on, off) {
 
 function wsInit() {
   console.log('Trying to open a WS connection...');
-  $statusElement.classList.remove('greentext');
-  $statusElement.classList.remove('redtext');
-  $statusElement.innerText = 'Подключение...';
+  orangeText();
 
   websocket = new WebSocket(gateway);
   websocket.onopen = wsOnOpen;
@@ -49,43 +65,30 @@ function wsInit() {
 
 function wsOnOpen(event) {
   console.log('Connection opened');
-  $statusElement.classList.add('greentext');
-  $statusElement.classList.remove('redtext');
-  $statusElement.innerText = 'Подключен';
+  greenText();
 }
 
 function wsOnClose(event) {
   console.log('Connection closed');
-  $statusElement.classList.remove('greentext');
-  $statusElement.classList.add('redtext');
-  $statusElement.innerText = 'Соединение потеряно';
-  setTimeout(wsInit, 2000);
+  setTimeout(wsInit, 1000);
 }
 
 function wsOnMessage(event) {
-  console.log('recieved msg');
+  clearInterval(waitForResponse);
+  greenText();
+  console.log('msg recieved');
 }
 
 function sendCmd(direction, stateBoolean) {
   let stateNumeric = stateBoolean ? 1 : 0;
-  let run = () => {
-    let obj = {
-      btn: direction,
-      state: stateNumeric,
-    };
-    console.log(`ws btn=${direction} state=${stateNumeric}`);
-    console.log(obj);
-    websocket.send(JSON.stringify(obj));
+  let obj = {
+    btn: direction,
+    state: stateNumeric,
   };
-  if (stateBoolean) {
-    run();
-    globalInterval[direction] = setInterval(() => {
-      run();
-    }, intervalMs);
-  } else {
-    clearInterval(globalInterval[direction]);
-    run();
-  }
+  console.log(`ws send btn=${direction} state=${stateNumeric}`);
+  console.log(obj);
+  websocket.send(JSON.stringify(obj));
+  waitForResponse = setInterval(waitForResponseFunc, waitForResponseTimeout);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
