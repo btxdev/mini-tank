@@ -81,3 +81,19 @@ body {
 .btn-top {
   grid-area: 1 / 2 / 1 / 2;
 }
+.status {
+  font-size: 22px;
+  font-family: Arial;
+  background-color: rgb(192, 89, 30);
+  font-weight: 800;
+  line-height: 22px;
+  height: 26px;
+  color: white;
+  padding: 5px;
+}
+.greentext {
+  background-color: rgb(30, 197, 57);
+}
+.redtext {
+  background-color: rgb(224, 8, 8);
+}

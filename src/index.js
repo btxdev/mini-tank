@@ -10,6 +10,9 @@ let intervalMs = 500;
 let gateway = `ws://${window.location.hostname}/ws`;
 let websocket;
 
+let statusElementSelector = '.status';
+let $statusElement;
+
 function isTouchscreen() {
   if (window.matchMedia('(pointer:coarse)').matches) {
     return true;
@@ -34,6 +37,10 @@ function bind(selector, on, off) {
 
 function wsInit() {
   console.log('Trying to open a WS connection...');
+  $statusElement.classList.remove('greentext');
+  $statusElement.classList.remove('redtext');
+  $statusElement.innerText = 'Подключение...';
+
   websocket = new WebSocket(gateway);
   websocket.onopen = wsOnOpen;
   websocket.onclose = wsOnClose;
@@ -42,10 +49,16 @@ function wsInit() {
 
 function wsOnOpen(event) {
   console.log('Connection opened');
+  $statusElement.classList.add('greentext');
+  $statusElement.classList.remove('redtext');
+  $statusElement.innerText = 'Подключен';
 }
 
 function wsOnClose(event) {
   console.log('Connection closed');
+  $statusElement.classList.remove('greentext');
+  $statusElement.classList.add('redtext');
+  $statusElement.innerText = 'Соединение потеряно';
   setTimeout(wsInit, 2000);
 }
 
@@ -76,6 +89,8 @@ function sendCmd(direction, stateBoolean) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  $statusElement = document.querySelector(statusElementSelector);
+
   wsInit();
 
   let btns = ['left', 'right', 'top', 'bottom'];
