@@ -12,11 +12,21 @@ const char *password = APPSK;
 
 AsyncWebServer server(80);
 
-void spam(uint8_t outByte) {
-  Serial.write(outByte);
-  // for(int i = 0; i < 1; i++) {
-    
-  // }
+bool leftBtnState = false;
+bool rightBtnState = false;
+bool topBtnState = false;
+bool bottomBtnState = false;
+uint32_t lastSentCmd = 0;
+
+void sendStates() {
+  if(leftBtnState) Serial.write(1);
+  else Serial.write(2);
+  if(rightBtnState) Serial.write(3);
+  else Serial.write(4);
+  if(topBtnState) Serial.write(5);
+  else Serial.write(6);
+  if(bottomBtnState) Serial.write(7);
+  else Serial.write(8);
 }
 
 void handleRoot(AsyncWebServerRequest *request) {
@@ -27,22 +37,11 @@ void handleController(AsyncWebServerRequest *request) {
   if(request->hasParam("btn") && request->hasParam("state")) {
     String btn = request->getParam("btn")->value();
     bool state = request->getParam("state")->value() == "1";
-    if(btn == "left") {
-      if (state) spam(1);
-      else spam(2);
-    }
-    if(btn == "right") {
-      if (state) spam(3);
-      else spam(4);
-    }
-    if(btn == "top") {
-      if (state) spam(5);
-      else spam(6);
-    }
-    if(btn == "bottom") {
-      if (state) spam(7);
-      else spam(8);
-    }
+    if(btn == "left") leftBtnState = state;
+    if(btn == "right") rightBtnState = state;
+    if(btn == "top") topBtnState = state;
+    if(btn == "bottom") bottomBtnState = state;
+    sendStates();
     request->send(200, "application/json", "{'status': 'ok'}");
   }
   else {
@@ -74,4 +73,9 @@ void setup() {
   server.begin();
 }
 
-void loop() {}
+void loop() {
+  if((millis() - lastSentCmd) > 500) {
+    sendStates();
+    lastSentCmd = millis();
+  }
+}
