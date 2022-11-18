@@ -5,6 +5,7 @@
 // #include <ESP8266WebServer.h>
 // #include <Servo.h>
 // #include "AsyncServo.h"
+// #include "AsyncServoLib.h"
 
 #ifndef APSSID
 #define APSSID "wemos wifi"
@@ -31,6 +32,9 @@ AsyncWebServer server(80);
 
 // AsyncServoClass leftServo;
 // AsyncServoClass rightServo;
+
+// AsyncServo leftServo;
+// AsyncServo rightServo;
 
 // void stop(uint16_t milliseconds) {
 //   leftServo.writeSpeed(0);
@@ -83,7 +87,9 @@ void handleLeft(AsyncWebServerRequest *request) {
   // leftServo.play();
   // rightServo.add(9999);
   // rightServo.play();
-  digitalWrite(LEFT_SERVO_PIN, HIGH);
+  // digitalWrite(LEFT_SERVO_PIN, HIGH);
+  // leftServo.write(SPEED);
+  // rightServo.write(-SPEED);
   request->send(200, "application/json", "{'status': 'ok'}");
 }
 
@@ -92,7 +98,9 @@ void handleStop(AsyncWebServerRequest *request) {
   // stop(1000);
   // leftServo.stop();
   // rightServo.stop();
-  digitalWrite(LEFT_SERVO_PIN, LOW);
+  // digitalWrite(LEFT_SERVO_PIN, LOW);
+  // leftServo.write(0);
+  // rightServo.write(0);
   request->send(200, "application/json", "{'status': 'ok'}");
 }
 
@@ -101,21 +109,23 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
 
-  // leftServo.begin(LEFT_SERVO_PIN, MCS_MIN, MCS_MAX);
+  leftServo.Attach(LEFT_SERVO_PIN);
+  leftServo.SetOutput(MCS_MIN, 1500, MCS_MAX);
   // leftServo.attachFB(LEFT_SERVO_PIN_FB,FEEDBACK_MIN, FEEDBACK_MAX);
 
-  // rightServo.begin(RIGHT_SERVO_PIN, MCS_MIN, MCS_MAX);
+  leftServo.Attach(RIGHT_SERVO_PIN);
+  rightServo.SetOutput(MCS_MIN, 1500, MCS_MAX);
   // rightServo.attachFB(RIGHT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
 
-  pinMode(LEFT_SERVO_PIN, OUTPUT);
-  digitalWrite(LEFT_SERVO_PIN, HIGH);
-  delay(1000);
-  digitalWrite(LEFT_SERVO_PIN, LOW);
-  delay(1000);
-  digitalWrite(LEFT_SERVO_PIN, HIGH);
-  delay(1000);
-  digitalWrite(LEFT_SERVO_PIN, LOW);
-  delay(1000);
+  // pinMode(LEFT_SERVO_PIN, OUTPUT);
+  // digitalWrite(LEFT_SERVO_PIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LEFT_SERVO_PIN, LOW);
+  // delay(1000);
+  // digitalWrite(LEFT_SERVO_PIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LEFT_SERVO_PIN, LOW);
+  // delay(1000);
 
   Serial.println("Configuring access point...");
   IPAddress gateway(192, 168, 0, 1);
@@ -146,4 +156,7 @@ void setup() {
 
 void loop() {
   // server.handleClient();
+  // leftServo.Update();
+  // rightServo.Update();
+
 }

@@ -25,38 +25,38 @@ document.addEventListener('DOMContentLoaded', () => {
     '.btn-left .button',
     () => {
       console.log('turn left');
-      fetch('/left');
+      fetch('/controller?btn=left&state=1');
     },
     () => {
       console.log('stop');
-      fetch('/stop');
+      fetch('/controller?btn=left&state=0');
     }
   );
   bind(
     '.btn-right .button',
     () => {
-      console.log('turn right');
+      fetch('/controller?btn=right&state=1');
     },
     () => {
-      console.log('stop');
+      fetch('/controller?btn=right&state=0');
     }
   );
   bind(
     '.btn-top .button',
     () => {
-      console.log('move forward');
+      fetch('/controller?btn=top&state=1');
     },
     () => {
-      console.log('stop');
+      fetch('/controller?btn=top&state=0');
     }
   );
   bind(
     '.btn-bottom .button',
     () => {
-      console.log('move backward');
+      fetch('/controller?btn=bottom&state=1');
     },
     () => {
-      console.log('stop');
+      fetch('/controller?btn=bottom&state=0');
     }
   );
 });
