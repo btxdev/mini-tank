@@ -1,3 +1,12 @@
+var globalInterval = {
+  left: undefined,
+  right: undefined,
+  top: undefined,
+  bottom: undefined,
+};
+
+let intervalMs = 500;
+
 function isTouchscreen() {
   if (window.matchMedia('(pointer:coarse)').matches) {
     return true;
@@ -20,43 +29,34 @@ function bind(selector, on, off) {
   });
 }
 
+function sendCmd(direction, stateBoolean) {
+  let stateNumeric = stateBoolean ? 1 : 0;
+  let run = () => {
+    console.log(`fetch btn=${direction} state=${stateNumeric}`);
+    fetch(`/controller?btn=${direction}&state=${stateNumeric}`);
+  };
+  if (stateBoolean) {
+    run();
+    globalInterval[direction] = setInterval(() => {
+      run();
+    }, intervalMs);
+  } else {
+    clearInterval(globalInterval[direction]);
+    run();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  bind(
-    '.btn-left .button',
-    () => {
-      console.log('turn left');
-      fetch('/controller?btn=left&state=1');
-    },
-    () => {
-      console.log('stop');
-      fetch('/controller?btn=left&state=0');
-    }
-  );
-  bind(
-    '.btn-right .button',
-    () => {
-      fetch('/controller?btn=right&state=1');
-    },
-    () => {
-      fetch('/controller?btn=right&state=0');
-    }
-  );
-  bind(
-    '.btn-top .button',
-    () => {
-      fetch('/controller?btn=top&state=1');
-    },
-    () => {
-      fetch('/controller?btn=top&state=0');
-    }
-  );
-  bind(
-    '.btn-bottom .button',
-    () => {
-      fetch('/controller?btn=bottom&state=1');
-    },
-    () => {
-      fetch('/controller?btn=bottom&state=0');
-    }
-  );
+  let btns = ['left', 'right', 'top', 'bottom'];
+  for (let btn of btns) {
+    bind(
+      `.btn-${btn} .button`,
+      () => {
+        sendCmd(btn, true);
+      },
+      () => {
+        sendCmd(btn, false);
+      }
+    );
+  }
 });
