@@ -1,4 +1,4 @@
-var globalInterval = {
+let globalInterval = {
   left: undefined,
   right: undefined,
   top: undefined,
@@ -6,6 +6,9 @@ var globalInterval = {
 };
 
 let intervalMs = 500;
+
+let gateway = `ws://${window.location.hostname}/ws`;
+let websocket;
 
 function isTouchscreen() {
   if (window.matchMedia('(pointer:coarse)').matches) {
@@ -29,11 +32,37 @@ function bind(selector, on, off) {
   });
 }
 
+function wsInit() {
+  console.log('Trying to open a WS connection...');
+  websocket = new WebSocket(gateway);
+  websocket.onopen = wsOnOpen;
+  websocket.onclose = wsOnClose;
+  websocket.onmessage = wsOnMessage;
+}
+
+function wsOnOpen(event) {
+  console.log('Connection opened');
+}
+
+function wsOnClose(event) {
+  console.log('Connection closed');
+  setTimeout(wsInit, 2000);
+}
+
+function wsOnMessage(event) {
+  console.log('recieved msg');
+}
+
 function sendCmd(direction, stateBoolean) {
   let stateNumeric = stateBoolean ? 1 : 0;
   let run = () => {
-    console.log(`fetch btn=${direction} state=${stateNumeric}`);
-    fetch(`/controller?btn=${direction}&state=${stateNumeric}`);
+    let obj = {
+      btn: direction,
+      state: stateNumeric,
+    };
+    console.log(`ws btn=${direction} state=${stateNumeric}`);
+    console.log(obj);
+    websocket.send(JSON.stringify(obj));
   };
   if (stateBoolean) {
     run();
@@ -47,6 +76,8 @@ function sendCmd(direction, stateBoolean) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  wsInit();
+
   let btns = ['left', 'right', 'top', 'bottom'];
   for (let btn of btns) {
     bind(
