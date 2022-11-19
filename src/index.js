@@ -1,10 +1,21 @@
 const waitForResponseTimeout = 2000;
-const gateway = `ws://${window.location.hostname}/ws`;
+// const gateway = `ws://${window.location.hostname}/ws`;
+const gateway = `ws://192.168.0.1/ws`;
 const statusElementSelector = '.status';
 
 let websocket;
 let waitForResponse;
 let $statusElement;
+let imWaitingForResponse = false;
+
+let gyroscope = {
+  pitch: 0,
+  roll: 0,
+  yaw: 0,
+  accelX: 0,
+  accelY: 0,
+  accelZ: 0,
+};
 
 function redText(msg = 'Соединение потеряно') {
   $statusElement.classList.remove('greentext');
@@ -25,10 +36,11 @@ function greenText(msg = 'Подключен') {
 }
 
 function waitForResponseFunc() {
+  clearInterval(waitForResponse);
+  if (!imWaitingForResponse) return;
   redText();
   websocket.close();
   document.location.reload();
-  clearInterval(waitForResponse);
 }
 
 function isTouchscreen() {
@@ -73,10 +85,35 @@ function wsOnClose(event) {
   setTimeout(wsInit, 1000);
 }
 
+function json(strData) {
+  return new Promise((resolve, reject) => {
+    try {
+      resolve(JSON.parse(strData));
+    } catch (exc) {
+      reject(exc);
+    }
+  });
+}
+
 function wsOnMessage(event) {
+  imWaitingForResponse = false;
   clearInterval(waitForResponse);
   greenText();
-  console.log('msg recieved');
+  console.log(event.data);
+  json(event.data)
+    .then((jsonData) => {
+      if (jsonData.msgType == 'gyroscope') {
+        gyroscope.pitch = jsonData?.pitch;
+        gyroscope.roll = jsonData?.roll;
+        gyroscope.yaw = jsonData?.yaw;
+        gyroscope.accelX = jsonData?.accX;
+        gyroscope.accelY = jsonData?.accY;
+        gyroscope.accelZ = jsonData?.accZ;
+      }
+    })
+    .catch((exc) => {
+      //
+    });
 }
 
 function sendCmd(direction, stateBoolean) {
@@ -88,6 +125,7 @@ function sendCmd(direction, stateBoolean) {
   console.log(`ws send btn=${direction} state=${stateNumeric}`);
   console.log(obj);
   websocket.send(JSON.stringify(obj));
+  imWaitingForResponse = true;
   waitForResponse = setInterval(waitForResponseFunc, waitForResponseTimeout);
 }
 
