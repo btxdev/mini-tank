@@ -1,7 +1,9 @@
+#include <Wire.h>
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include <iarduino_I2C_connect.h>
 
 #ifndef APSSID
 #define APSSID "Demolisher"
@@ -15,6 +17,8 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
 StaticJsonDocument<100> doc;
+
+iarduino_I2C_connect I2C2;
 
 bool leftBtnState = false;
 bool rightBtnState = false;
@@ -86,6 +90,19 @@ void initWebSocket() {
   server.addHandler(&ws);
 }
 
+const int dataLength = 5;
+byte data[dataLength];
+
+void resendContent(AsyncSerial &serial)
+{
+  String incomingSerialString = String(serial.GetContent());
+  ws.textAll(incomingSerialString);
+}
+
+AsyncSerial asyncSerial(data, dataLength,
+	[](AsyncSerial& sender) { resendContent(sender); }
+);
+
 void setup() {
   delay(1000);
   Serial.begin(115200);
@@ -93,6 +110,9 @@ void setup() {
   Serial.print(2); Serial.println(0);
   Serial.print(3); Serial.println(0);
   Serial.print(4); Serial.println(0);
+
+  Wire.begin(0x01);
+  I2C2.begin(REG_Array);
 
   IPAddress gateway(192, 168, 0, 1);
   IPAddress subnet(255, 255, 255, 0);
@@ -109,8 +129,6 @@ void setup() {
 
   server.on("/", HTTP_GET, handleRoot);
   server.begin();
-
-  pinMode(D7, OUTPUT);
 }
 
 void loop() {
@@ -120,9 +138,6 @@ void loop() {
   }
 
   if (Serial.available() > 0) {
-    digitalWrite(D7, HIGH);
-    String incomingSerialString = Serial.readString();
-    ws.textAll(incomingSerialString);
+    asyncSerial.AsyncRecieve();
   }
-  digitalWrite(D7, LOW);
 }
