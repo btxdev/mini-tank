@@ -4,18 +4,70 @@ const gateway = `ws://192.168.0.1/ws`;
 const statusElementSelector = '.status';
 
 let websocket;
-let waitForResponse;
 let $statusElement;
-let imWaitingForResponse = false;
+let waitForResponseInterval;
+let isWaitForResponse = false;
+
+let simpleN = [3, 5, 7, 11];
+
+let buttons = {
+  left: false,
+  right: false,
+  top: false,
+  bottom: false,
+};
+
+let mapPoints = [];
 
 let gyroscope = {
   pitch: 0,
   roll: 0,
   yaw: 0,
-  accelX: 0,
-  accelY: 0,
-  accelZ: 0,
 };
+
+let motors = {
+  left: 0,
+  right: 0,
+};
+
+function saveMapPointsToStorage() {}
+
+function addMapPoints(points) {}
+
+function loadMapPointsFromStorage() {}
+
+function encodeBtn() {
+  // let str = 'b';
+  // // let i = 1;
+  // let j = 0;
+  // for (let value of Object.values(buttons)) {
+  //   let byte = (value ? simpleN[j++] : 0) + 48;
+  //   str += String.fromCharCode(byte);
+  //   // str += value ? String(i) : String(i + 1);
+  //   // i += 2;
+  // }
+  // return str;
+  if (buttons.top) return 'b1';
+  else if (buttons.bottom) return 'b2';
+  else if (buttons.left) return 'b3';
+  else if (buttons.right) return 'b4';
+  else return 'b0';
+}
+
+function compareBtn(testStr) {
+  return testStr === encodeBtn();
+}
+
+function pressBtn(btn, state) {
+  if (buttons.hasOwnProperty(btn)) buttons[btn] = Boolean(state);
+  let cmd = encodeBtn();
+  websocket.send(cmd);
+  isWaitForResponse = true;
+  waitForResponseInterval = setInterval(
+    waitForResponseFunc,
+    waitForResponseTimeout
+  );
+}
 
 function redText(msg = 'Соединение потеряно') {
   $statusElement.classList.remove('greentext');
@@ -36,8 +88,8 @@ function greenText(msg = 'Подключен') {
 }
 
 function waitForResponseFunc() {
-  clearInterval(waitForResponse);
-  if (!imWaitingForResponse) return;
+  clearInterval(waitForResponseInterval);
+  if (!isWaitForResponse) return;
   redText();
   websocket.close();
   document.location.reload();
@@ -96,19 +148,23 @@ function json(strData) {
 }
 
 function wsOnMessage(event) {
-  imWaitingForResponse = false;
-  clearInterval(waitForResponse);
+  isWaitForResponse = false;
+  clearInterval(waitForResponseInterval);
   greenText();
   console.log(event.data);
   json(event.data)
     .then((jsonData) => {
-      if (jsonData.msgType == 'gyroscope') {
+      if (jsonData.msgType == 'feedback') {
         gyroscope.pitch = jsonData?.pitch;
         gyroscope.roll = jsonData?.roll;
         gyroscope.yaw = jsonData?.yaw;
-        gyroscope.accelX = jsonData?.accX;
-        gyroscope.accelY = jsonData?.accY;
-        gyroscope.accelZ = jsonData?.accZ;
+        motors.left = jsonData?.motLeft;
+        motors.right = jsonData?.motRight;
+      }
+      if (jsonData.msgType == 'map') {
+        if (jsonData.hasOwnProperty('points')) {
+          addMapPoints(jsonData.points);
+        }
       }
     })
     .catch((exc) => {
@@ -116,22 +172,10 @@ function wsOnMessage(event) {
     });
 }
 
-function sendCmd(direction, stateBoolean) {
-  let stateNumeric = stateBoolean ? 1 : 0;
-  let obj = {
-    btn: direction,
-    state: stateNumeric,
-  };
-  console.log(`ws send btn=${direction} state=${stateNumeric}`);
-  console.log(obj);
-  websocket.send(JSON.stringify(obj));
-  imWaitingForResponse = true;
-  waitForResponse = setInterval(waitForResponseFunc, waitForResponseTimeout);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   $statusElement = document.querySelector(statusElementSelector);
 
+  loadMapPointsFromStorage();
   wsInit();
 
   let btns = ['left', 'right', 'top', 'bottom'];
@@ -139,10 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
     bind(
       `.btn-${btn} .button`,
       () => {
-        sendCmd(btn, true);
+        pressBtn(btn, true);
       },
       () => {
-        sendCmd(btn, false);
+        pressBtn(btn, false);
       }
     );
   }

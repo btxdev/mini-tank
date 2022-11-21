@@ -155,9 +155,9 @@ function render() {
   ctx.stroke();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  cnv = document.getElementById('canvas');
-  w = cnv.clientWidth;
-  h = cnv.clientHeight;
-  initCanvas();
-});
+// document.addEventListener('DOMContentLoaded', () => {
+//   cnv = document.getElementById('canvas');
+//   w = cnv.clientWidth;
+//   h = cnv.clientHeight;
+//   initCanvas();
+// });
