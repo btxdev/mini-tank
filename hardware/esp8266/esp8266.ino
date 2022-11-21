@@ -103,6 +103,12 @@ void loop() {
       }
       serialFlush();
     }
+
+    if(code == 'j') {
+      String buffer = Serial.readString();
+      ws.textAll(buffer);
+    }
+
   }
     
   //   bool reading = true;
