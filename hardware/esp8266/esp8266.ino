@@ -24,7 +24,8 @@ void sendAction() {
 }
 
 void serialFlush() {
-  while(Serial.available()) { Serial.read(); }
+  Serial.flush();
+  // while(Serial.available()) { Serial.read(); }
 }
 
 void handleRoot(AsyncWebServerRequest *request) {
@@ -86,25 +87,64 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) {
-    String buffer = "";
-    bool reading = true;
-    while(reading) {
-      uint8_t code = Serial.read();
-      buffer += (char)code;
-      if(code == 10 || code == 13) reading = false;
-      if(Serial.available() == 0) reading = false;
-    }
-    if(buffer.substring(0, 1) == "b") {
+    uint8_t code = Serial.read();
+
+    if(code == 'b') {
+      String buffer = "b";
+      bool reading = true;
+      while(reading) {
+        uint8_t code1 = Serial.read();
+        buffer += (char)code1;
+        if(code == 10 || code == 13) reading = false;
+        if(Serial.available() == 0) reading = false;
+      }
       if(buffer.substring(0, 2) != lastAction) {
-        serialFlush();
         sendAction();
-        ws.textAll("some shit on response: " + buffer);
       }
-      else {
-        ws.textAll("good response: " + buffer);
-      }
+      serialFlush();
     }
   }
+    
+  //   bool reading = true;
+  //   // uint32_t waitTimer = millis();
+  //   while(reading) {
+  //     // wait for slowly incoming data
+  //     // uint32_t waitTimer = millis();
+  //     // while(!(Serial.available() || ((millis() - waitTimer) > 100))) {}
+  //     // read byte
+  //     uint8_t code = Serial.read();
+  //     buffer += (char)code;
+  //     // end of message
+  //     // if(code == 10 || code == 13) {
+  //     //   reading = false;
+  //     //   break;
+  //     // }
+  //     if(code == 10 || code == 13) reading = false;
+  //     if(Serial.available() == 0) reading = false;
+  //     // if((Serial.available() == 0) && ((millis() - waitTimer) > 1000)) {
+  //     //   reading = false;
+  //     //   break;
+  //     // }
+  //   }
+  //   // ws.textAll(buffer);
+  //   // is action code
+  //   if(buffer.substring(0, 1) == "b") {
+  //     if(buffer.substring(0, 2) != lastAction) {
+  //       // serialFlush();
+  //       sendAction();
+  //       // ws.textAll("some shit on response: " + buffer);
+  //     }
+  //     else {
+  //       // ws.textAll("good response: " + buffer);
+  //     }
+  //     // serialFlush();
+  //   }
+  //   // is json data
+  //   // else {
+  //   //   ws.textAll(buffer);
+  //   // }
+  //   serialFlush();
+  // }
 
     
 
