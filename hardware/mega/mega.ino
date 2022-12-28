@@ -31,6 +31,7 @@ bool readyForCmd = true;
 
 // MPU6050 timers
 uint32_t mpuGyroTimer = 0;
+uint32_t motorsTimer = 0;
 float mpuGyroTimeStep = 0.01;
 
 // MPU6050 pitch, roll and yaw values
@@ -121,7 +122,7 @@ void loop()
       else if(actionReadMode) {
         lastAction = code - 48;
         actionReadMode = false;
-        Serial.println(lastAction);
+        // Serial.println(lastAction);
         actionFeedback();
       }
     }
@@ -170,12 +171,36 @@ void loop()
     rightServo.writeSpeed(SERVO_SPEED);
   }
   else if (lastAction == 3) {
+    readyForCmd = false;
     leftServo.writeSpeed(-SERVO_SPEED);
     rightServo.writeSpeed(-SERVO_SPEED);
+    if(yaw < -80) {
+      yaw = 0;
+      // Serial.println("22222222");
+      // leftServoDegrees = 0;
+      readyForCmd = true;
+      lastAction = 0;
+      leftServo.writeSpeed(0);
+      rightServo.writeSpeed(0);
+    }
+    // leftServo.writeSpeed(-SERVO_SPEED);
+    // rightServo.writeSpeed(-SERVO_SPEED);
   }
   else if (lastAction == 4) {
+    readyForCmd = false;
     leftServo.writeSpeed(SERVO_SPEED);
     rightServo.writeSpeed(SERVO_SPEED);
+    if(yaw > 80) {
+      yaw = 0;
+      // Serial.println("22222222");
+      // leftServoDegrees = 0;
+      readyForCmd = true;
+      lastAction = 0;
+      leftServo.writeSpeed(0);
+      rightServo.writeSpeed(0);
+    }
+    // leftServo.writeSpeed(SERVO_SPEED);
+    // rightServo.writeSpeed(SERVO_SPEED);
   }
   else {
     leftServo.writeSpeed(0);
@@ -184,8 +209,8 @@ void loop()
 
   // // gyro MPU6050
   // if((millis() - mpuGyroTimer) > (mpuGyroTimeStep * 1000)) {
-  if((millis() - mpuGyroTimer) > 1000) {
-    mpuGyroTimer = millis();
+  if((millis() - motorsTimer) > 1000) {
+    motorsTimer = millis();
 
     int leftServoNew = leftServo.readAngleFB();
     int rightServoNew = rightServo.readAngleFB();
@@ -216,6 +241,23 @@ void loop()
     leftServoPrev = leftServoNew;
     rightServoPrev = rightServoNew;
   }
+
+  if((millis() - mpuGyroTimer) > (mpuGyroTimeStep * 1000)) {
+    mpuGyroTimer = millis();
+
+    Vector norm = mpu.readNormalizeGyro();
+    // calculate pitch, roll and yaw
+    pitch = pitch + norm.YAxis * mpuGyroTimeStep;
+    roll = roll + norm.XAxis * mpuGyroTimeStep;
+    yaw = yaw + norm.ZAxis * mpuGyroTimeStep;
+    Serial.print(pitch);
+    Serial.print(" ");
+    Serial.print(roll);
+    Serial.print(" ");
+    Serial.println(yaw);
+  }
+
+
 
   // servo degrees
   // leftServo.writeSpeed(SERVO_SPEED);
