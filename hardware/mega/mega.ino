@@ -104,6 +104,9 @@ void setup()
   Serial.println("run loop");
 }
 
+// 180 - 27
+
+
 void loop() 
 {
   // // read data from WiFi module
@@ -126,12 +129,12 @@ void loop()
 
   // control servo motors
   if (lastAction == 1) {
-    Serial.println(leftServoDegrees);
+    // Serial.println(leftServoDegrees);
     readyForCmd = false;
     leftServo.writeSpeed(SERVO_SPEED);
     rightServo.writeSpeed(-SERVO_SPEED);
-    if(leftServoDegrees > 180) {
-      Serial.println("22222222");
+    if(leftServoDegrees > 230) {
+      // Serial.println("22222222");
       leftServoDegrees = 0;
       readyForCmd = true;
       lastAction = 0;
