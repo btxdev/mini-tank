@@ -88,8 +88,8 @@ bool actionReadMode = false;
 
 
 // servo degrees
-uint8_t leftServoPrev = 0;
-uint8_t rightServoPrev = 0;
+int leftServoPrev = 0;
+int rightServoPrev = 0;
 int32_t leftServoDegrees = 0;
 int32_t rightServoDegrees = 0;
 
@@ -241,18 +241,20 @@ void setup()
 void loop() 
 {
   // // read data from WiFi module
-  if(Serial1.available()) {
-    uint8_t code = Serial1.read();
+  if(readyForCmd) {
+    if(Serial1.available()) {
+      uint8_t code = Serial1.read();
 
-    // read action
-    if(code == 98) {
-      actionReadMode = true;
-    }
-    else if(actionReadMode) {
-      lastAction = code - 48;
-      actionReadMode = false;
-      Serial.println(lastAction);
-      actionFeedback();
+      // read action
+      if(code == 98) {
+        actionReadMode = true;
+      }
+      else if(actionReadMode) {
+        lastAction = code - 48;
+        actionReadMode = false;
+        // Serial.println(lastAction);
+        actionFeedback();
+      }
     }
   }
 
