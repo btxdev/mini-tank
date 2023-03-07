@@ -415,6 +415,7 @@ void loop()
   if((millis() - mapTimer) > MAP_INTERVAL) {
     mapTimer = millis();
 
+    Serial1.print("j");
     Serial1.print('type:map;');
     for(int i = 0; i < MAP_ARRAY_SIZE; i++) {
       Serial1.print(theMap[i]);
