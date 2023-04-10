@@ -98,17 +98,17 @@ int32_t rightServoDegrees = 0;
 uint32_t mapTimer = 0;
 
 // map
-#define MAP_SIZE_X         100
-#define MAP_SIZE_Y         100
-#define INITIAL_TANK_POS_X 49
-#define INITIAL_TANK_POS_Y 49
+#define MAP_SIZE_X         2
+#define MAP_SIZE_Y         2
+#define INITIAL_TANK_POS_X 0
+#define INITIAL_TANK_POS_Y 0
 #define MAP_ARRAY_SIZE     ((MAP_SIZE_X * MAP_SIZE_Y) + 1)
 
 #define UNKNOWN_CELL  0
 #define FREE_CELL     1
 #define OBSTACLE_CELL 2
 
-int theMap[MAP_ARRAY_SIZE];
+uint8_t theMap[MAP_ARRAY_SIZE];
 
 // current coordinates of tank
 uint8_t tankX = INITIAL_TANK_POS_X;
@@ -208,14 +208,14 @@ void setup()
 
 
   // Initialize MPU6050
-  Serial.println("Initializing MPU6050...");
+  Serial.println(F("Initializing MPU6050..."));
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
-    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
+    Serial.println(F("Could not find a valid MPU6050 sensor, check wiring!"));
     delay(500);
   }
 
-  Serial.println("Calibrating gyroscope...");
+  Serial.println(F("Calibrating gyroscope..."));
   mpu.calibrateGyro();
 
 
@@ -234,7 +234,7 @@ void setup()
   pinMode(IR_R2, INPUT);
 
 
-  Serial.println("run loop");
+  Serial.println(F("run loop"));
 }
 
 
@@ -244,6 +244,7 @@ void loop()
   if(readyForCmd) {
     if(Serial1.available()) {
       uint8_t code = Serial1.read();
+      Serial.println(code);
 
       // read action
       if(code == 98) {
@@ -354,11 +355,11 @@ void loop()
     pitch = pitch + norm.YAxis * mpuGyroTimeStep;
     roll = roll + norm.XAxis * mpuGyroTimeStep;
     yaw = yaw + norm.ZAxis * mpuGyroTimeStep;
-    Serial.print(pitch);
-    Serial.print(" ");
-    Serial.print(roll);
-    Serial.print(" ");
-    Serial.println(yaw);
+    // Serial.print(pitch);
+    // Serial.print(F(" "));
+    // Serial.print(roll);
+    // Serial.print(F(" "));
+    // Serial.println(yaw);
   }
 
 
@@ -400,7 +401,7 @@ void loop()
   }
   else {
     CoordinatesShift shift(false);
-    mapSetTo(tankX + shift.y, tankY + shift.x, OBSTACLE_FREE);
+    mapSetTo(tankX + shift.y, tankY + shift.x, FREE_CELL);
   }
   // detect right obstacle
   if(sonarRight.ping_cm() < SNR_THRESHOLD_DISTANCE) {
@@ -409,7 +410,7 @@ void loop()
   }
   else {
     CoordinatesShift shift(true);
-    mapSetTo(tankX + shift.y, tankY + shift.x, OBSTACLE_FREE);
+    mapSetTo(tankX + shift.y, tankY + shift.x, FREE_CELL);
   }
 
 
@@ -417,11 +418,11 @@ void loop()
   if((millis() - mapTimer) > MAP_INTERVAL) {
     mapTimer = millis();
 
-    Serial1.print("j");
-    Serial1.print('type:map;');
+    Serial1.print(F("j"));
+    Serial1.print(F("type:map;"));
     for(int i = 0; i < MAP_ARRAY_SIZE; i++) {
       Serial1.print(theMap[i]);
-      Serial1.print(",");
+      Serial1.print(F(","));
     }
     Serial1.println();
   }
