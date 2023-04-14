@@ -130,41 +130,16 @@ void loop()
 
   // control servo motors
   if (lastAction == 1) {
-    // Serial.println(leftServoDegrees);
     readyForCmd = false;
     leftServo.writeSpeed(SERVO_SPEED);
     rightServo.writeSpeed(-SERVO_SPEED);
     if(leftServoDegrees > 230) {
-      // Serial.println("22222222");
       leftServoDegrees = 0;
       readyForCmd = true;
       lastAction = 0;
       leftServo.writeSpeed(0);
       rightServo.writeSpeed(0);
     }
-    // Serial.println("ok 1");
-    // int leftServoNew = -leftServo.readAngleFB();
-    // int rightServoNew = -rightServo.readAngleFB();
-    // leftServoPrev = leftServoNew;
-    // rightServoPrev = rightServoNew;
-    // leftServo.writeSpeed(SERVO_SPEED);
-    // rightServo.writeSpeed(-SERVO_SPEED);
-    // Serial.println("ok 2");
-    // while(true) {
-    //   Serial.println("ok 3");
-    //   // int leftServoNew = -leftServo.readAngleFB();
-    //   // int rightServoNew = -rightServo.readAngleFB();
-    //   // int leftServoDelta = calcDegrees(leftServoNew, leftServoPrev);
-    //   // int rightServoDelta = calcDegrees(rightServoNew, rightServoPrev);
-    //   // Serial.println(leftServoDegrees);
-    //   // if(leftServoDelta > 360) break;
-    // }
-    // Serial.println("ok 4");
-    // leftServo.writeSpeed(0);
-    // rightServo.writeSpeed(0);
-    // delay(5000);
-    // leftServo.writeSpeed(SERVO_SPEED);
-    // rightServo.writeSpeed(-SERVO_SPEED);
   }
   else if (lastAction == 2) {
     leftServo.writeSpeed(-SERVO_SPEED);
@@ -176,15 +151,11 @@ void loop()
     rightServo.writeSpeed(-SERVO_SPEED);
     if(yaw < -80) {
       yaw = 0;
-      // Serial.println("22222222");
-      // leftServoDegrees = 0;
       readyForCmd = true;
       lastAction = 0;
       leftServo.writeSpeed(0);
       rightServo.writeSpeed(0);
     }
-    // leftServo.writeSpeed(-SERVO_SPEED);
-    // rightServo.writeSpeed(-SERVO_SPEED);
   }
   else if (lastAction == 4) {
     readyForCmd = false;
@@ -192,15 +163,11 @@ void loop()
     rightServo.writeSpeed(SERVO_SPEED);
     if(yaw > 80) {
       yaw = 0;
-      // Serial.println("22222222");
-      // leftServoDegrees = 0;
       readyForCmd = true;
       lastAction = 0;
       leftServo.writeSpeed(0);
       rightServo.writeSpeed(0);
     }
-    // leftServo.writeSpeed(SERVO_SPEED);
-    // rightServo.writeSpeed(SERVO_SPEED);
   }
   else {
     leftServo.writeSpeed(0);
@@ -208,7 +175,6 @@ void loop()
   }
 
   // // gyro MPU6050
-  // if((millis() - mpuGyroTimer) > (mpuGyroTimeStep * 1000)) {
   if((millis() - motorsTimer) > 1000) {
     motorsTimer = millis();
 
@@ -217,26 +183,8 @@ void loop()
     int leftServoDelta = calcDegrees(leftServoNew, leftServoPrev);
     int rightServoDelta = calcDegrees(rightServoNew, rightServoPrev);
 
-
-    // // read normalized values
-    // Vector norm = mpu.readNormalizeGyro();
-    // // calculate pitch, roll and yaw
-    // pitch = pitch + norm.YAxis * mpuGyroTimeStep;
-    // roll = roll + norm.XAxis * mpuGyroTimeStep;
-    // yaw = yaw + norm.ZAxis * mpuGyroTimeStep;
-    // Serial.println(leftServo.readAngleFB());
-    // Serial1.print("j");
-    // Serial1.println(leftServo.readAngleFB());
-    // Serial.print(leftServoNew);
-    // Serial.print(" ");
-    // Serial.print(leftServoPrev);
-    // Serial.print(" ");
-    // Serial.println(leftServoDelta);
-
     leftServoDegrees += leftServoDelta;
     rightServoDegrees += rightServoDelta;
-
-    // Serial.println(leftServoDegrees);
 
     leftServoPrev = leftServoNew;
     rightServoPrev = rightServoNew;
@@ -256,96 +204,4 @@ void loop()
     Serial.print(" ");
     Serial.println(yaw);
   }
-
-
-
-  // servo degrees
-  // leftServo.writeSpeed(SERVO_SPEED);
-  // int servoNewValue;
-  // servoNewValue = -leftServo.readAngleFB();
-  // leftServoDegrees += calcDegrees(servoNewValue, leftServoPrev);
-  // leftServoPrev = servoNewValue;
-  // servoNewValue = -rightServo.readAngleFB();
-  // rightServoDegrees += calcDegrees(servoNewValue, rightServoPrev);
-  // rightServoPrev = servoNewValue;
-
-  // draw map
-  // if((millis() - mapTimer) > MAP_INTERVAL) {
-  //   mapTimer = millis();
-
-  //   // read servo values
-  //   int leftServoNew = -leftServo.readAngleFB();
-  //   int rightServoNew = -rightServo.readAngleFB();
-  //   int leftServoDelta = calcDegrees(leftServoNew, leftServoPrev);
-  //   int rightServoDelta = calcDegrees(rightServoNew, rightServoPrev);
-  //   leftServoPrev = leftServoNew;
-  //   rightServoPrev = rightServoNew;
-
-  //   // calc new coords
-  //   int angle = yaw * M_PI / 180;
-  //   int deltaX = cos(angle) * leftServoDelta;
-  //   int deltaY = sin(angle) * rightServoDelta;
-  //   points[pointsN][0] = deltaX;
-  //   points[pointsN][1] = deltaY;
-
-  //   // Serial.print(pointsN);
-  //   // Serial.print(": ");
-  //   // Serial.print(points[pointsN][0]);
-  //   // Serial.print(", ");
-  //   // Serial.println(points[pointsN][1]);
-    
-  //   pointsN++;
-
-    
-  //   // servoNewValue = -rightServo.readAngleFB();
-  //   // rightServoDegrees += calcDegrees(servoNewValue, rightServoPrev);
-  //   // rightServoPrev = servoNewValue;
-  //   // int leftDelta = 
-  //   // Serial.print("Left servo: ");
-  //   // Serial.print(leftServoDegrees);
-  //   // Serial.print(" Gyro yaw: ");
-  //   // // read gyro
-  //   // Serial.println(yaw);
-  // }
-
-  // map output
-  // if(pointsN == POINTS_LIM) {
-  //   pointsN = 0;
-  //   // JsonObject obj1 = mapJsonDoc.createNestedObject();
-  //   StaticJsonDocument<mapJsonCapacity> mapJsonDoc;
-  //   mapJsonDoc["msgType"] = "map";
-  //   JsonArray pointsArray = mapJsonDoc.createNestedArray("points");
-  //   for(int i = 0; i < POINTS_LIM; i++) {
-  //     JsonObject pointObj = pointsArray.createNestedObject();
-  //     pointObj["x"] = points[i][0];
-  //     pointObj["y"] = points[i][1];
-  //     // pointsArray.add(pointObj);
-  //   }
-  //   // mapJsonDoc["msgType"] = "map";
-  //   // mapJsonDoc["points"] = obj1;
-
-  //   char jsonOutput[1000];
-  //   serializeJson(mapJsonDoc, jsonOutput);
-  //   // Serial.println(jsonOutput);
-  //   Serial1.print("j");
-  //   Serial1.println(jsonOutput);
-  // }
-
-
-  // // output accel/gyro data
-  // if((millis() - mpuOutputTimer) > MPU_INTERVAL) {
-  //   doc["msgType"] = "gyroscope";
-  //   doc["pitch"] = pitch;
-  //   doc["roll"] = roll;
-  //   doc["yaw"] = yaw;
-  //   doc["accX"] = accelX;
-  //   doc["accY"] = accelY;
-  //   doc["accZ"] = accelZ;
-  //   char jsonOutput[200];
-  //   serializeJson(doc, jsonOutput);
-  //   Serial.println(jsonOutput);
-  //   Serial1.println(jsonOutput);
-  //   mpuOutputTimer = millis();
-  // }
-
 }

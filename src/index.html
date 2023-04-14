@@ -9,18 +9,33 @@
     />
     <title>Controller</title>
     <link rel="stylesheet" href="index.css" />
-    <script type="application/javascript" src="std.js"></script>
     <script type="application/javascript" src="index.js"></script>
-    <script type="application/javascript" src="canvas.js"></script>
   </head>
   <body>
     <div class="status redtext">загрузка...</div>
-    <div class="canvas-wrapper">
-      <canvas id="canvas"></canvas>
+    <div class="map-wrapper">
+      <table id="map">
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><div class="arrow">&#11165;</div></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
     </div>
     <div class="buttons-wrapper">
       <div class="box">
         <div class="content">
+          <!-- кнопки -->
           <div class="wrapper btn-left">
             <div class="button unselectable">&#8593;</div>
           </div>
@@ -32,6 +47,28 @@
           </div>
           <div class="wrapper btn-bottom">
             <div class="button unselectable">&#8593;</div>
+          </div>
+          <!-- индикаторы -->
+          <div class="wrapper indicator-left">
+            <div class="text-indicator">0.0 cm</div>
+          </div>
+          <div class="wrapper indicator-right">
+            <div class="text-indicator">0.0 cm</div>
+          </div>
+          <div class="wrapper indicator-top">
+            <div class="text-indicator">0.0 cm</div>
+          </div>
+          <div class="wrapper indicator-bottom">
+            <div class="text-indicator">0.0 cm</div>
+          </div>
+          <div class="wrapper indicator-center">
+            <div class="text-indicator">0 deg</div>
+          </div>
+          <div class="wrapper indicator-fbl">
+            <div class="text-indicator">FBL: 0</div>
+          </div>
+          <div class="wrapper indicator-fbr">
+            <div class="text-indicator">FBR: 0</div>
           </div>
         </div>
       </div>
