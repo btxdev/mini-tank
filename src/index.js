@@ -117,6 +117,60 @@ function bind(selector, on, off) {
   });
 }
 
+function parseString(str) {
+  const props = str.split(';');
+  for (const prop of props) {
+    const arr = prop.split(':');
+    if (arr.length != 2) continue;
+    const [key, value] = arr;
+    const numeric = Number(value);
+    // yaw:-339.20;FBL:0;FBR:0;x:0;y:0;SF:40;SB:113;SL:57;SR:74;
+    if (key == 'yaw') {
+      gyroscope.yaw = numeric;
+      const $elem = document.querySelector('.indicator-center .text-indicator');
+      $elem.innerText = `${numeric} deg`;
+    }
+    if (key == 'FBL') {
+      motors.left = numeric;
+      const $elem = document.querySelector('.indicator-fbl .text-indicator');
+      $elem.innerText = `FBL: ${numeric} deg`;
+    }
+    if (key == 'FBR') {
+      motors.right = numeric;
+      const $elem = document.querySelector('.indicator-fbr .text-indicator');
+      $elem.innerText = `FBR: ${numeric} deg`;
+    }
+    if (key == 'SF') {
+      const $elem = document.querySelector('.indicator-top .text-indicator');
+      $elem.innerText = `${numeric} cm`;
+      const $cell = document.querySelector('#map tr:nth-child(1) td:nth-child(2)');
+      if (numeric <= 30) $cell.style.background = 'red';
+      else $cell.style.background = 'initial';
+    }
+    if (key == 'SB') {
+      const $elem = document.querySelector('.indicator-bottom .text-indicator');
+      $elem.innerText = `${numeric} cm`;
+      const $cell = document.querySelector('#map tr:nth-child(3) td:nth-child(2)');
+      if (numeric <= 30) $cell.style.background = 'red';
+      else $cell.style.background = 'initial';
+    }
+    if (key == 'SL') {
+      const $elem = document.querySelector('.indicator-left .text-indicator');
+      $elem.innerText = `${numeric} cm`;
+      const $cell = document.querySelector('#map tr:nth-child(2) td:nth-child(1)');
+      if (numeric <= 30) $cell.style.background = 'red';
+      else $cell.style.background = 'initial';
+    }
+    if (key == 'SR') {
+      const $elem = document.querySelector('.indicator-right .text-indicator');
+      $elem.innerText = `${numeric} cm`;
+      const $cell = document.querySelector('#map tr:nth-child(2) td:nth-child(3)');
+      if (numeric <= 30) $cell.style.background = 'red';
+      else $cell.style.background = 'initial';
+    }
+  }
+}
+
 function wsInit() {
   console.log('Trying to open a WS connection...');
   orangeText();
@@ -152,24 +206,25 @@ function wsOnMessage(event) {
   clearInterval(waitForResponseInterval);
   greenText();
   console.log(event.data);
-  json(event.data)
-    .then((jsonData) => {
-      if (jsonData.msgType == 'feedback') {
-        gyroscope.pitch = jsonData?.pitch;
-        gyroscope.roll = jsonData?.roll;
-        gyroscope.yaw = jsonData?.yaw;
-        motors.left = jsonData?.motLeft;
-        motors.right = jsonData?.motRight;
-      }
-      if (jsonData.msgType == 'map') {
-        if (jsonData.hasOwnProperty('points')) {
-          addMapPoints(jsonData.points);
-        }
-      }
-    })
-    .catch((exc) => {
-      //
-    });
+  parseString(event.data);
+  // json(event.data)
+  //   .then((jsonData) => {
+  //     if (jsonData.msgType == 'feedback') {
+  //       gyroscope.pitch = jsonData?.pitch;
+  //       gyroscope.roll = jsonData?.roll;
+  //       gyroscope.yaw = jsonData?.yaw;
+  //       motors.left = jsonData?.motLeft;
+  //       motors.right = jsonData?.motRight;
+  //     }
+  //     if (jsonData.msgType == 'map') {
+  //       if (jsonData.hasOwnProperty('points')) {
+  //         addMapPoints(jsonData.points);
+  //       }
+  //     }
+  //   })
+  //   .catch((exc) => {
+  //     //
+  //   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

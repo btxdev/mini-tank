@@ -12,7 +12,7 @@ void setup() {
 }
  
 void loop() {
-  delay(50);
+  delay(100);
   Serial.print(digitalRead(IR_L1));
   Serial.print(" ");
   Serial.print(digitalRead(IR_L2));

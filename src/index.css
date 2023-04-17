@@ -132,10 +132,10 @@ body {
 }
 .map-wrapper {
   box-sizing: border-box;
-  width: 90vw;
-  height: 90vw;
+  width: 72vw;
+  height: 72vw;
   margin-top: 5vw;
-  margin-left: 5vw;
+  margin-left: 14vw;
 }
 #map {
   width: 100%;
