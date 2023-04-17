@@ -29,10 +29,10 @@
 
 // серво настройки
 #define LEFT_SERVO_PIN 2
-#define LEFT_SERVO_PIN_FB A15
+#define LEFT_SERVO_PIN_FB A14
 
 #define RIGHT_SERVO_PIN 3
-#define RIGHT_SERVO_PIN_FB A14
+#define RIGHT_SERVO_PIN_FB A15
 
 // выходной диапазон ШИМ
 #define MCS_MIN 500
@@ -45,6 +45,9 @@
 
 // соотношение обороты / дистанция (мм)
 #define SERVO_DISTANCE 109
+
+// период между измерениями
+#define SERVO_PERIOD_MS 200
 
 
 // MPU настройки
@@ -84,6 +87,9 @@
 #define ESP_OUTPUT_PERIOD 2000
 
 
+#define DEG2RAD(deg) (deg * (M_PI / 180))
+
+
 AmperkaServo leftServo;
 AmperkaServo rightServo;
 
@@ -96,9 +102,9 @@ NewPing sonarLeft(SNR_LEFT_TRIG, SNR_LEFT_ECHO, SNR_MAX_DISTANCE);
 NewPing sonarRight(SNR_RIGHT_TRIG, SNR_RIGHT_ECHO, SNR_MAX_DISTANCE);
 
 
-// void actionFeedback(uint8_t lastAction);
-// void serial1Flush();
-int calcDegrees(int newValue, int oldValue);
+void actionFeedback(uint8_t lastAction);
+void serial1Flush();
+int32_t calcDegrees(int32_t newValue, int32_t oldValue);
 
 
 void setup() 
@@ -119,6 +125,7 @@ void setup()
   }
 
   Serial.println(F("Calibrating center gyroscope..."));
+  delay(400);
   mpuCenter.calibrateGyro();
 
   Serial.println(F("Initializing Front MPU6050..."));
@@ -129,6 +136,7 @@ void setup()
   }
 
   Serial.println(F("Calibrating front gyroscope..."));
+  delay(400);
   mpuFront.calibrateGyro();
 
   Serial.println(F("Gyroscopes are ready!"));
@@ -136,7 +144,7 @@ void setup()
 
   // сервы
   leftServo.attach(LEFT_SERVO_PIN, MCS_MIN, MCS_MAX);
-  leftServo.attachFB(LEFT_SERVO_PIN_FB,FEEDBACK_MIN, FEEDBACK_MAX);
+  leftServo.attachFB(LEFT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
 
   rightServo.attach(RIGHT_SERVO_PIN, MCS_MIN, MCS_MAX);
   rightServo.attachFB(RIGHT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
@@ -165,26 +173,34 @@ void loop()
   static float frontYaw = 0;
 
   // среднее значение угла поворота с 2 датчиков
+  static float pitch = 0;
+  static float roll = 0;
   static float yaw = 0;
 
   static uint32_t mpuGyroTimer = 0;
 
 
   // сервы
-  // предыдущее значение
-  static int leftServoPrev = 0;
-  static int rightServoPrev = 0;
-
-  // градусы
+  // суммарное значение (градусы)
   static int32_t leftServoDegrees = 0;
   static int32_t rightServoDegrees = 0;
 
+  // значение до сброса (градусы)
+  static int32_t leftServoPrev = 0;
+  static int32_t rightServoPrev = 0;
+
   static uint32_t motorsTimer = 0;
+
+  // градусы в момент начала движения
+  static int32_t servoSaved = 0; 
 
 
   // вычисляемые координаты (мм)
   static int32_t xPos = 0;
   static int32_t yPos = 0;
+
+  // угол в момент начала разворота
+  static float yawSaved = 0;
 
 
   // парсер
@@ -193,12 +209,33 @@ void loop()
   static uint8_t lastAction = STOP;
 
 
-  // отправка данных
   static uint32_t outputTimer = 0;
 
 
-  // двигатели
-  // ...
+  // сервы FB и координаты
+  if((millis() - motorsTimer) > SERVO_PERIOD_MS) {
+    motorsTimer = millis();
+
+    // сколько было новых градусов спустя SERVO_PERIOD_MS
+    const int leftServoNew = leftServo.readAngleFB();
+    const int rightServoNew = rightServo.readAngleFB();
+    const int32_t leftServoDelta = calcDegrees(leftServoNew, leftServoPrev);
+    const int32_t rightServoDelta = calcDegrees(rightServoNew, rightServoPrev);
+
+    leftServoDegrees += leftServoDelta;
+    rightServoDegrees += rightServoDelta;
+
+    leftServoPrev = leftServoNew;
+    rightServoPrev = rightServoNew;
+
+    // координаты
+    const double arad = DEG2RAD(yaw);
+    const double ax = cos(arad);
+    const double ay = sin(arad);
+    const int32_t delta = (leftServoDelta + rightServoDelta) / 2;
+    xPos += delta * ax;
+    yPos += delta * ay;
+  }
 
 
   // IR датчики
@@ -227,7 +264,7 @@ void loop()
   const bool isObstacleRight = isSonarRight;
 
 
-  // гироскоп и координаты
+  // гироскоп
   if((millis() - mpuGyroTimer) > MPU_GYRO_PERIOD_MS) {
     mpuGyroTimer = millis();
 
@@ -246,16 +283,123 @@ void loop()
     frontYaw += normFront.ZAxis * MPU_GYRO_PERIOD_S;
 
     // общий
+    pitch = (centerPitch + frontPitch) / 2;
+    roll = (centerRoll + frontRoll) / 2;
     yaw = (centerYaw + frontYaw) / 2;
-
-    // координаты
-    // ...
   }
   
 
   // чтение данных с ESP
-  while(Serial1.available()) {
-    Serial1.read();
+  // готов читать команду
+  if(readyForCmd) {
+    // пришли данные с ESP
+    if(Serial1.available()) {
+      uint8_t code = Serial1.read();
+
+      // пришла команда b (button)
+      if(code == 98) {
+        actionReadMode = true;
+      }
+      else if(actionReadMode) {
+        lastAction = code - 48;
+        actionReadMode = false;
+        actionFeedback(lastAction);
+      }
+    }
+  }
+  // игнор
+  else {
+    serial1Flush();
+  }
+
+
+  // управление двигателями
+  // вперед
+  if (lastAction == 1) {
+
+    readyForCmd = false;
+
+    leftServo.writeSpeed(SERVO_SPEED);
+    rightServo.writeSpeed(-SERVO_SPEED);
+
+    // пока не будет подсчитано 230 градусов
+    if((leftServoDegrees - servoSaved) > 230) {
+      readyForCmd = true;
+      lastAction = 0;
+      leftServo.writeSpeed(0);
+      rightServo.writeSpeed(0);
+    }
+    else {
+      servoSaved = leftServoDegrees;
+    }
+  }
+
+  // назад
+  else if (lastAction == 2) {
+
+    readyForCmd = false;
+
+    leftServo.writeSpeed(-SERVO_SPEED);
+    rightServo.writeSpeed(SERVO_SPEED);
+
+    // пока не будет подсчитано -230 градусов
+    if((leftServoDegrees - servoSaved) > -230) {
+      readyForCmd = true;
+      lastAction = 0;
+      leftServo.writeSpeed(0);
+      rightServo.writeSpeed(0);
+    }
+    else {
+      servoSaved = leftServoDegrees;
+    }
+  }
+
+  // влево
+  else if (lastAction == 3) {
+
+    readyForCmd = false;
+
+    leftServo.writeSpeed(-SERVO_SPEED);
+    rightServo.writeSpeed(-SERVO_SPEED);
+
+    // пока не будет достигнут угол в -90
+    if((yaw - yawSaved) >= -90) {
+      readyForCmd = true;
+      lastAction = 0;
+      leftServo.writeSpeed(0);
+      rightServo.writeSpeed(0);
+    }
+    else {
+      yawSaved = yaw;
+    }
+  }
+
+  // вправо
+  else if (lastAction == 4) {
+
+    readyForCmd = false;
+
+    yawSaved = yaw;
+
+    leftServo.writeSpeed(SERVO_SPEED);
+    rightServo.writeSpeed(SERVO_SPEED);
+
+    // пока не будет достигнут угол в 90
+    if((yaw - yawSaved) >= 90) {
+      readyForCmd = true;
+      lastAction = 0;
+      leftServo.writeSpeed(0);
+      rightServo.writeSpeed(0);
+    }
+    else {
+      yawSaved = yaw;
+    }
+  }
+
+  // стоп
+  else {
+    leftServo.writeSpeed(0);
+    rightServo.writeSpeed(0);
   }
 
 
@@ -287,90 +431,27 @@ void loop()
     // отправка
     Serial1.println(output);
   }
-
-
-  // // read data from WiFi module
-  // if(readyForCmd) {
-  //   if(Serial1.available()) {
-  //     uint8_t code = Serial1.read();
-  //     Serial.println(code);
-
-  //     // read action
-  //     if(code == 98) {
-  //       actionReadMode = true;
-  //     }
-  //     else if(actionReadMode) {
-  //       lastAction = code - 48;
-  //       actionReadMode = false;
-  //       // Serial.println(lastAction);
-  //       actionFeedback(lastAction);
-  //     }
-  //   }
-  // }
-
-  // // control servo motors
-  // if (lastAction == 1) {
-  //   readyForCmd = false;
-  //   leftServo.writeSpeed(SERVO_SPEED);
-  //   rightServo.writeSpeed(-SERVO_SPEED);
-  //   if(leftServoDegrees > 230) {
-  //     leftServoDegrees = 0;
-  //     readyForCmd = true;
-  //     lastAction = 0;
-  //     leftServo.writeSpeed(0);
-  //     rightServo.writeSpeed(0);
-  //   }
-  // }
-  // else if (lastAction == 2) {
-  //   leftServo.writeSpeed(-SERVO_SPEED);
-  //   rightServo.writeSpeed(SERVO_SPEED);
-  // }
-  // else if (lastAction == 3) {
-  //   readyForCmd = false;
-  //   leftServo.writeSpeed(-SERVO_SPEED);
-  //   rightServo.writeSpeed(-SERVO_SPEED);
-  //   if(yaw < -80) {
-  //     yaw = 0;
-  //     readyForCmd = true;
-  //     lastAction = 0;
-  //     leftServo.writeSpeed(0);
-  //     rightServo.writeSpeed(0);
-  //   }
-  // }
-  // else if (lastAction == 4) {
-  //   readyForCmd = false;
-  //   leftServo.writeSpeed(SERVO_SPEED);
-  //   rightServo.writeSpeed(SERVO_SPEED);
-  //   if(yaw > 80) {
-  //     yaw = 0;
-  //     readyForCmd = true;
-  //     lastAction = 0;
-  //     leftServo.writeSpeed(0);
-  //     rightServo.writeSpeed(0);
-  //   }
-  // }
-  // else {
-  //   leftServo.writeSpeed(0);
-  //   rightServo.writeSpeed(0);
-  // }
 }
 
-// // отправка ответа на ESP
-// void actionFeedback(uint8_t lastAction) {
-//   Serial1.write(98);
-//   Serial1.write(lastAction + 48);
-//   Serial1.write(13);
-//   Serial1.write(10);
-// }
 
-// // очистка буфера
-// void serial1Flush() {
-//   while(Serial1.available()) { Serial1.read(); }
-// }
+// отправка ответа на ESP
+void actionFeedback(uint8_t lastAction) {
+  Serial1.write(98);
+  Serial1.write(lastAction + 48);
+  Serial1.write(13);
+  Serial1.write(10);
+}
+
+
+// очистка буфера
+void serial1Flush() {
+  while(Serial1.available()) { Serial1.read(); }
+}
+
 
 // подсчет градусов двигателей
-int calcDegrees(int newValue, int oldValue) {
-  int delta = newValue - oldValue;
+int32_t calcDegrees(int32_t newValue, int32_t oldValue) {
+  int32_t delta = newValue - oldValue;
   if(delta > 90) delta = (newValue - 180) - oldValue;
   else if(delta < -90) delta = newValue - (oldValue - 180);
   return delta;
