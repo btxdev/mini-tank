@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <NewPing.h>
 #include <MPU6050.h>
-#include <AmperkaServo.h>
+#include "AmperkaServo.h"
 
 
 // IR настройки
@@ -149,6 +149,9 @@ void setup()
   rightServo.attach(RIGHT_SERVO_PIN, MCS_MIN, MCS_MAX);
   rightServo.attachFB(RIGHT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
 
+  leftServo.writeSpeed(0);
+  rightServo.writeSpeed(0);
+
 
   // инфракрасные датчики
   pinMode(IR_L1, INPUT);
@@ -289,111 +292,45 @@ void loop()
   }
   
 
-  // чтение данных с ESP
-  // готов читать команду
-  if(readyForCmd) {
-    // пришли данные с ESP
-    if(Serial1.available()) {
-      uint8_t code = Serial1.read();
+  // пришли данные с ESP
+  if(Serial1.available()) {
+    uint8_t code = Serial1.read();
 
-      // пришла команда b (button)
-      if(code == 98) {
-        actionReadMode = true;
-      }
-      else if(actionReadMode) {
-        lastAction = code - 48;
-        actionReadMode = false;
-        actionFeedback(lastAction);
-      }
+    // пришла команда b (button)
+    if(code == 98) {
+      actionReadMode = true;
     }
-  }
-  // игнор
-  else {
-    serial1Flush();
+    else if(actionReadMode) {
+      lastAction = code - 48;
+      actionReadMode = false;
+      actionFeedback(lastAction);
+    }
   }
 
 
   // управление двигателями
   // вперед
   if (lastAction == 1) {
-
-    readyForCmd = false;
-
     leftServo.writeSpeed(SERVO_SPEED);
     rightServo.writeSpeed(-SERVO_SPEED);
-
-    // пока не будет подсчитано 230 градусов
-    if((leftServoDegrees - servoSaved) > 230) {
-      readyForCmd = true;
-      lastAction = 0;
-      leftServo.writeSpeed(0);
-      rightServo.writeSpeed(0);
-    }
-    else {
-      servoSaved = leftServoDegrees;
-    }
   }
 
   // назад
   else if (lastAction == 2) {
-
-    readyForCmd = false;
-
     leftServo.writeSpeed(-SERVO_SPEED);
     rightServo.writeSpeed(SERVO_SPEED);
-
-    // пока не будет подсчитано -230 градусов
-    if((leftServoDegrees - servoSaved) > -230) {
-      readyForCmd = true;
-      lastAction = 0;
-      leftServo.writeSpeed(0);
-      rightServo.writeSpeed(0);
-    }
-    else {
-      servoSaved = leftServoDegrees;
-    }
   }
 
   // влево
   else if (lastAction == 3) {
-
-    readyForCmd = false;
-
     leftServo.writeSpeed(-SERVO_SPEED);
     rightServo.writeSpeed(-SERVO_SPEED);
-
-    // пока не будет достигнут угол в -90
-    if((yaw - yawSaved) >= -90) {
-      readyForCmd = true;
-      lastAction = 0;
-      leftServo.writeSpeed(0);
-      rightServo.writeSpeed(0);
-    }
-    else {
-      yawSaved = yaw;
-    }
   }
 
   // вправо
   else if (lastAction == 4) {
-
-    readyForCmd = false;
-
-    yawSaved = yaw;
-
     leftServo.writeSpeed(SERVO_SPEED);
     rightServo.writeSpeed(SERVO_SPEED);
-
-    // пока не будет достигнут угол в 90
-    if((yaw - yawSaved) >= 90) {
-      readyForCmd = true;
-      lastAction = 0;
-      leftServo.writeSpeed(0);
-      rightServo.writeSpeed(0);
-    }
-    else {
-      yawSaved = yaw;
-    }
   }
 
   // стоп
