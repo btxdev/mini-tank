@@ -323,13 +323,11 @@ void loop()
     rightServo.writeSpeed(-SERVO_SPEED);
 
     // пока не будет подсчитано 230 градусов
-    if((leftServoDegrees - servoSaved) > 230) {
+    if(abs(leftServoDegrees - servoSaved) > 230) {
       readyForCmd = true;
       lastAction = 0;
       leftServo.writeSpeed(0);
       rightServo.writeSpeed(0);
-    }
-    else {
       servoSaved = leftServoDegrees;
     }
   }
@@ -343,13 +341,11 @@ void loop()
     rightServo.writeSpeed(SERVO_SPEED);
 
     // пока не будет подсчитано -230 градусов
-    if((leftServoDegrees - servoSaved) > -230) {
+    if(abs(leftServoDegrees - servoSaved) > 230) {
       readyForCmd = true;
       lastAction = 0;
       leftServo.writeSpeed(0);
       rightServo.writeSpeed(0);
-    }
-    else {
       servoSaved = leftServoDegrees;
     }
   }
@@ -363,13 +359,11 @@ void loop()
     rightServo.writeSpeed(-SERVO_SPEED);
 
     // пока не будет достигнут угол в -90
-    if((yaw - yawSaved) >= -90) {
+    if(abs(yaw - yawSaved) >= 90) {
       readyForCmd = true;
       lastAction = 0;
       leftServo.writeSpeed(0);
       rightServo.writeSpeed(0);
-    }
-    else {
       yawSaved = yaw;
     }
   }
@@ -385,19 +379,17 @@ void loop()
     rightServo.writeSpeed(SERVO_SPEED);
 
     // пока не будет достигнут угол в 90
-    if((yaw - yawSaved) >= 90) {
+    if(abs(yaw - yawSaved) >= 90) {
       readyForCmd = true;
       lastAction = 0;
       leftServo.writeSpeed(0);
       rightServo.writeSpeed(0);
-    }
-    else {
       yawSaved = yaw;
     }
   }
 
   // стоп
-  else {
+  else if(lastAction == 0) {
     leftServo.writeSpeed(0);
     rightServo.writeSpeed(0);
   }
