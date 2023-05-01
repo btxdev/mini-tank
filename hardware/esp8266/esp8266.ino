@@ -1,7 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <ArduinoJson.h>
 
 
 #ifndef APSSID
@@ -22,8 +21,9 @@ String lastAction = "b0";
 
 
 void sendAction();
-void serialFlush();
+// void serialFlush();
 void handleRoot(AsyncWebServerRequest *request);
+
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
@@ -42,8 +42,10 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   }
 }
 
+
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 void initWebSocket();
+
 
 void setup() {
   Serial.begin(115200);
@@ -68,47 +70,43 @@ void setup() {
   server.begin();
 }
 
+
 void loop() {
   if (Serial.available() > 0) {
-    uint8_t code = Serial.read();
-
-    // код b (button)
-    if(code == 'b') {
-      String buffer = "b";
-      bool reading = true;
-      while(reading) {
-        uint8_t code1 = Serial.read();
-        buffer += (char)code1;
-        if(code == 10 || code == 13) reading = false;
-        if(Serial.available() == 0) reading = false;
-      }
-      if(buffer.substring(0, 2) != lastAction) {
-        sendAction();
-      }
-      serialFlush();
-    }
+    char code = Serial.read();
 
     // код r (read)
-    if(code == 'r') {
+    if (code == '<') {
       String buffer = Serial.readString();
+      // String buffer = "";
+      // while (Serial.available() > 0) {
+      //   code = Serial.read();
+      //   if (code == '>' || code == '\n' || code == '\r') break;
+      //   else buffer += code;
+      //   // else buffer += String((char)code);
+      // }
       ws.textAll(buffer);
-      serialFlush();
+      Serial.flush();
     }
 
   }
 }
 
+
 void sendAction() {
   Serial.println(lastAction);
 }
 
-void serialFlush() {
-  Serial.flush();
-}
+
+// void serialFlush() {
+//   Serial.flush();
+// }
+
 
 void handleRoot(AsyncWebServerRequest *request) {
   request->send(200, "text/html", "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta http-equiv='X-UA-Compatible' content='IE=edge'><meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0'><title>Controller</title><style>.arrow,.button{font-family:Arial;overflow:hidden}.arrow,.button,.status,.text-indicator{font-family:Arial}body{margin:0;padding:0}.mark-red{background-color:rgba(255,0,0,.1);border:1px solid red}.mark-cyan{background-color:rgba(0,255,255,.1);border:1px solid #0ff}.unselectable{-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.buttons-wrapper{position:absolute;width:90%;height:auto;bottom:20px;left:0;right:0;margin:auto}.button,.wrapper{height:100%;width:100%}.box{width:100%;position:relative}.box:before{content:'';display:block;padding-top:100%}.box .content{position:absolute;top:0;left:0;bottom:0;right:0;display:grid;grid-template-columns:20% 20% 20% 20% 20%;grid-template-rows:20% 20% 20% 20% 20%}.wrapper{padding:5%;box-sizing:border-box}.button{border-radius:12%;background-color:#7a8ca0;color:#fff;font-size:600%;line-height:92%;text-align:center}.active{background-color:#363a3a}.btn-left{grid-area:3/2/3/2;transform:rotate(-90deg)}.btn-right{grid-area:3/4/3/4;transform:rotate(90deg)}.btn-bottom{grid-area:4/3/4/3;transform:rotate(180deg)}.btn-top{grid-area:2/3/2/3}.indicator-left{grid-area:3/1/3/1}.indicator-right{grid-area:3/5/3/5}.indicator-top{grid-area:1/3/1/3}.indicator-bottom{grid-area:5/3/5/3}.indicator-center{grid-area:3/3/3/3}.indicator-fbl{grid-area:5/1/5/1}.indicator-fbr{grid-area:5/5/5/5}.text-indicator{width:100%;height:40%;margin-top:30%;color:#000;font-size:120%;text-align:center;vertical-align:middle;font-weight:700}.status{font-size:22px;background-color:#c0591e;font-weight:800;line-height:22px;height:26px;color:#fff;padding:5px}.greentext{background-color:#1ec539}.redtext{background-color:#e00808}.map-wrapper{box-sizing:border-box;width:72vw;height:72vw;margin-top:5vw;margin-left:14vw}#map{width:100%;height:100%}#map td{border:1px solid #000;width:33%;height:33%}.arrow{font-size:400%;line-height:100%;text-align:center}</style><script type='application/javascript'>const waitForResponseTimeout=2e3,gateway='ws://192.168.0.1/ws',statusElementSelector='.status';let websocket,$statusElement,waitForResponseInterval,isWaitForResponse=!1,simpleN=[3,5,7,11],buttons={left:!1,right:!1,top:!1,bottom:!1},mapPoints=[],gyroscope={pitch:0,roll:0,yaw:0},motors={left:0,right:0};function saveMapPointsToStorage(){}function addMapPoints(t){}function loadMapPointsFromStorage(){}function encodeBtn(){return buttons.top?'b1':buttons.bottom?'b2':buttons.left?'b3':buttons.right?'b4':'b0'}function compareBtn(t){return t===encodeBtn()}function pressBtn(t,e){buttons.hasOwnProperty(t)&&(buttons[t]=Boolean(e));t=encodeBtn();websocket.send(t),isWaitForResponse=!0,waitForResponseInterval=setInterval(waitForResponseFunc,waitForResponseTimeout)}function redText(t='Соединение потеряно'){$statusElement.classList.remove('greentext'),$statusElement.classList.add('redtext'),$statusElement.innerText=t}function orangeText(t='Подключение...'){$statusElement.classList.remove('greentext'),$statusElement.classList.remove('redtext'),$statusElement.innerText=t}function greenText(t='Подключен'){$statusElement.classList.add('greentext'),$statusElement.classList.remove('redtext'),$statusElement.innerText=t}function waitForResponseFunc(){clearInterval(waitForResponseInterval),isWaitForResponse&&(redText(),websocket.close(),document.location.reload())}function isTouchscreen(){return!!window.matchMedia('(pointer:coarse)').matches}function bind(t,e,n){var t=document.querySelector(t),o=isTouchscreen?'touchend':'mouseup';t.addEventListener(isTouchscreen?'touchstart':'mousedown',t=>{t.target.classList.add('active'),e()}),t.addEventListener(o,t=>{t.target.classList.remove('active'),n()})}function parseString(t){for(const o of t.split(';')){var e,n=o.split(':');2==n.length&&([n,e]=n,e=Number(e),'yaw'==n&&(gyroscope.yaw=e,document.querySelector('.indicator-center .text-indicator').innerText=e+' deg'),'FBL'==n&&(motors.left=e,document.querySelector('.indicator-fbl .text-indicator').innerText=`FBL: ${e} deg`),'FBR'==n&&(motors.right=e,document.querySelector('.indicator-fbr .text-indicator').innerText=`FBR: ${e} deg`),'SF'==n&&(document.querySelector('.indicator-top .text-indicator').innerText=e+' cm',document.querySelector('#map tr:nth-child(1) td:nth-child(2)').style.background=e<=30?'red':'initial'),'SB'==n&&(document.querySelector('.indicator-bottom .text-indicator').innerText=e+' cm',document.querySelector('#map tr:nth-child(3) td:nth-child(2)').style.background=e<=30?'red':'initial'),'SL'==n&&(document.querySelector('.indicator-left .text-indicator').innerText=e+' cm',document.querySelector('#map tr:nth-child(2) td:nth-child(1)').style.background=e<=30?'red':'initial'),'SR'==n)&&(document.querySelector('.indicator-right .text-indicator').innerText=e+' cm',document.querySelector('#map tr:nth-child(2) td:nth-child(3)').style.background=e<=30?'red':'initial')}}function wsInit(){console.log('Trying to open a WS connection...'),orangeText(),(websocket=new WebSocket(gateway)).onopen=wsOnOpen,websocket.onclose=wsOnClose,websocket.onmessage=wsOnMessage}function wsOnOpen(t){console.log('Connection opened'),greenText()}function wsOnClose(t){console.log('Connection closed'),setTimeout(wsInit,1e3)}function json(n){return new Promise((t,e)=>{try{t(JSON.parse(n))}catch(t){e(t)}})}function wsOnMessage(t){isWaitForResponse=!1,clearInterval(waitForResponseInterval),greenText(),console.log(t.data),parseString(t.data)}document.addEventListener('DOMContentLoaded',()=>{$statusElement=document.querySelector(statusElementSelector),loadMapPointsFromStorage(),wsInit();for(let t of['left','right','top','bottom'])bind(`.btn-${t} .button`,()=>{pressBtn(t,!0)},()=>{pressBtn(t,!1)})});</script></head><body><div class='status redtext'>загрузка...</div><div class='map-wrapper'><table id='map'><tr><td></td><td></td><td></td></tr><tr><td></td><td><div class='arrow'>&#11165;</div></td><td></td></tr><tr><td></td><td></td><td></td></tr></table></div><div class='buttons-wrapper'><div class='box'><div class='content'><!-- кнопки --><div class='wrapper btn-left'><div class='button unselectable'>&#8593;</div></div><div class='wrapper btn-right'><div class='button unselectable'>&#8593;</div></div><div class='wrapper btn-top'><div class='button unselectable'>&#8593;</div></div><div class='wrapper btn-bottom'><div class='button unselectable'>&#8593;</div></div><!-- индикаторы --><div class='wrapper indicator-left'><div class='text-indicator'>0.0 cm</div></div><div class='wrapper indicator-right'><div class='text-indicator'>0.0 cm</div></div><div class='wrapper indicator-top'><div class='text-indicator'>0.0 cm</div></div><div class='wrapper indicator-bottom'><div class='text-indicator'>0.0 cm</div></div><div class='wrapper indicator-center'><div class='text-indicator'>0 deg</div></div><div class='wrapper indicator-fbl'><div class='text-indicator'>FBL: 0</div></div><div class='wrapper indicator-fbr'><div class='text-indicator'>FBR: 0</div></div></div></div></div></body></html>");
 }
+
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch (type) {
@@ -117,6 +115,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
       break;
   }
 }
+
 
 void initWebSocket() {
   ws.onEvent(onEvent);

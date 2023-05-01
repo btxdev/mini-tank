@@ -102,13 +102,25 @@ NewPing sonarLeft(SNR_LEFT_TRIG, SNR_LEFT_ECHO, SNR_MAX_DISTANCE);
 NewPing sonarRight(SNR_RIGHT_TRIG, SNR_RIGHT_ECHO, SNR_MAX_DISTANCE);
 
 
-void actionFeedback(uint8_t lastAction);
-void serial1Flush();
 int32_t calcDegrees(int32_t newValue, int32_t oldValue);
+void signalSOS();
 
 
 void setup() 
-{ 
+{
+  signalSOS();
+
+  // сервы
+  leftServo.attach(LEFT_SERVO_PIN, MCS_MIN, MCS_MAX);
+  leftServo.attachFB(LEFT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
+
+  rightServo.attach(RIGHT_SERVO_PIN, MCS_MIN, MCS_MAX);
+  rightServo.attachFB(RIGHT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
+
+  leftServo.writeSpeed(0);
+  rightServo.writeSpeed(0);
+  
+
   // debug
   Serial.begin(115200);
 
@@ -140,17 +152,6 @@ void setup()
   mpuFront.calibrateGyro();
 
   Serial.println(F("Gyroscopes are ready!"));
-
-
-  // сервы
-  leftServo.attach(LEFT_SERVO_PIN, MCS_MIN, MCS_MAX);
-  leftServo.attachFB(LEFT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
-
-  rightServo.attach(RIGHT_SERVO_PIN, MCS_MIN, MCS_MAX);
-  rightServo.attachFB(RIGHT_SERVO_PIN_FB, FEEDBACK_MIN, FEEDBACK_MAX);
-
-  leftServo.writeSpeed(0);
-  rightServo.writeSpeed(0);
 
 
   // инфракрасные датчики
@@ -207,8 +208,6 @@ void loop()
 
 
   // парсер
-  static bool readyForCmd = true;
-  static bool actionReadMode = false;
   static uint8_t lastAction = STOP;
 
 
@@ -298,12 +297,9 @@ void loop()
 
     // пришла команда b (button)
     if(code == 98) {
-      actionReadMode = true;
-    }
-    else if(actionReadMode) {
+      code = Serial1.read();
       lastAction = code - 48;
-      actionReadMode = false;
-      actionFeedback(lastAction);
+      while(Serial1.available()) Serial1.read();
     }
   }
 
@@ -334,7 +330,7 @@ void loop()
   }
 
   // стоп
-  else {
+  else if(lastAction == 0) {
     leftServo.writeSpeed(0);
     rightServo.writeSpeed(0);
   }
@@ -346,7 +342,7 @@ void loop()
 
     // подготовка данных
     String output = "";
-    output += "r";
+    output += "<";
 
     // угол поворота
     output += "yaw:" + String(yaw) + ";";
@@ -365,24 +361,35 @@ void loop()
     output += "SL:" + String(sonarLeftDistance) + ";";
     output += "SR:" + String(sonarRightDistance) + ";";
 
+    // конец сообщения
+    output += ">";
+
     // отправка
     Serial1.println(output);
   }
 }
 
 
-// отправка ответа на ESP
-void actionFeedback(uint8_t lastAction) {
-  Serial1.write(98);
-  Serial1.write(lastAction + 48);
-  Serial1.write(13);
-  Serial1.write(10);
+// мигание встроенным светодиодом
+void beep13(int t) {
+  digitalWrite(13, 1);
+  delay(t);
+  digitalWrite(13, 0);
+  delay(t);
 }
-
-
-// очистка буфера
-void serial1Flush() {
-  while(Serial1.available()) { Serial1.read(); }
+void signalSOS() {
+  int t = 70;
+  pinMode(13, OUTPUT);
+  beep13(t);
+  beep13(t);
+  beep13(t);
+  beep13(t * 2);
+  beep13(t * 2);
+  beep13(t * 2);
+  beep13(t);
+  beep13(t);
+  beep13(t);
+  delay(t);
 }
 
 
