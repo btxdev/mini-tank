@@ -8,16 +8,12 @@ let $statusElement;
 let waitForResponseInterval;
 let isWaitForResponse = false;
 
-let simpleN = [3, 5, 7, 11];
-
 let buttons = {
   left: false,
   right: false,
   top: false,
   bottom: false,
 };
-
-let mapPoints = [];
 
 let gyroscope = {
   pitch: 0,
@@ -30,32 +26,12 @@ let motors = {
   right: 0,
 };
 
-function saveMapPointsToStorage() {}
-
-function addMapPoints(points) {}
-
-function loadMapPointsFromStorage() {}
-
 function encodeBtn() {
-  // let str = 'b';
-  // // let i = 1;
-  // let j = 0;
-  // for (let value of Object.values(buttons)) {
-  //   let byte = (value ? simpleN[j++] : 0) + 48;
-  //   str += String.fromCharCode(byte);
-  //   // str += value ? String(i) : String(i + 1);
-  //   // i += 2;
-  // }
-  // return str;
   if (buttons.top) return 'b1';
   else if (buttons.bottom) return 'b2';
   else if (buttons.left) return 'b3';
   else if (buttons.right) return 'b4';
   else return 'b0';
-}
-
-function compareBtn(testStr) {
-  return testStr === encodeBtn();
 }
 
 function pressBtn(btn, state) {
@@ -118,13 +94,13 @@ function bind(selector, on, off) {
 }
 
 function parseString(str) {
-  const props = str.split(';');
+  const props = str.replace(/[<>]/g, '').split(';');
   for (const prop of props) {
     const arr = prop.split(':');
     if (arr.length != 2) continue;
     const [key, value] = arr;
     const numeric = Number(value);
-    // yaw:-339.20;FBL:0;FBR:0;x:0;y:0;SF:40;SB:113;SL:57;SR:74;
+    // <yaw:-339.20;FBL:0;FBR:0;x:0;y:0;SF:40;SB:113;SL:57;SR:74>
     if (key == 'yaw') {
       gyroscope.yaw = numeric;
       const $elem = document.querySelector('.indicator-center .text-indicator');
@@ -230,7 +206,6 @@ function wsOnMessage(event) {
 document.addEventListener('DOMContentLoaded', () => {
   $statusElement = document.querySelector(statusElementSelector);
 
-  loadMapPointsFromStorage();
   wsInit();
 
   let btns = ['left', 'right', 'top', 'bottom'];

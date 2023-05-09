@@ -290,26 +290,19 @@ void loop()
   
 
   // чтение данных с ESP
-  // готов читать команду
-  if(readyForCmd) {
-    // пришли данные с ESP
-    if(Serial1.available()) {
-      uint8_t code = Serial1.read();
+  // готов читать команду и пришли данные с ESP
+  if(readyForCmd && Serial1.available()) {
+    uint8_t code = Serial1.read();
 
-      // пришла команда b (button)
-      if(code == 98) {
-        actionReadMode = true;
-      }
-      else if(actionReadMode) {
-        lastAction = code - 48;
-        actionReadMode = false;
-        actionFeedback(lastAction);
-      }
+    // пришла команда b (button)
+    if(code == 'b') {
+      actionReadMode = true;
     }
-  }
-  // игнор
-  else {
-    serial1Flush();
+    // код кнопки
+    else if(actionReadMode) {
+      lastAction = code - 48;
+      actionReadMode = false;
+    }
   }
 
 
@@ -395,13 +388,16 @@ void loop()
   }
 
 
-  // отправка данных на ESP 
-  if((millis() - outputTimer) > ESP_OUTPUT_PERIOD) {
+  // отправка данных на ESP если нечего читать
+  if(
+    !Serial1.available()
+    && (millis() - outputTimer) > ESP_OUTPUT_PERIOD
+    ) {
     outputTimer = millis();
 
     // подготовка данных
     String output = "";
-    output += "r";
+    output += "<";
 
     // угол поворота
     output += "yaw:" + String(yaw) + ";";
@@ -418,26 +414,13 @@ void loop()
     output += "SF:" + String(sonarFrontDistance) + ";";
     output += "SB:" + String(sonarBackDistance) + ";";
     output += "SL:" + String(sonarLeftDistance) + ";";
-    output += "SR:" + String(sonarRightDistance) + ";";
+    output += "SR:" + String(sonarRightDistance);
+
+    output += ">";
 
     // отправка
     Serial1.println(output);
   }
-}
-
-
-// отправка ответа на ESP
-void actionFeedback(uint8_t lastAction) {
-  Serial1.write(98);
-  Serial1.write(lastAction + 48);
-  Serial1.write(13);
-  Serial1.write(10);
-}
-
-
-// очистка буфера
-void serial1Flush() {
-  while(Serial1.available()) { Serial1.read(); }
 }
 
 
