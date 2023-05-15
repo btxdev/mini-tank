@@ -113,6 +113,25 @@ class Motor : public AmperkaServo
             float distance = (float) mm / 99.21 * 360;
             writeAngle(distance);
         }
+
+        void infiniteRun()
+        {
+            waFlag = false;
+            _speed = _maxSpeed;
+        }
+
+        void infiniteReverse()
+        {
+            waFlag = false;
+            _speed = -_maxSpeed;
+        }
+
+        void infiniteStop()
+        {
+            waFlag = false;
+            _speed = 0;
+            AmperkaServo::writeSpeed(0);
+        }
     
     private:
         uint8_t _feedbackPin;

@@ -9,8 +9,8 @@
 #define _MPU_CALIBRATE
 
 // чувствительность акселерометра, меньше = точнее
-// #define _MPU_ACCEL_RANGE MPU6050_RANGE_2G
-#define _MPU_ACCEL_RANGE MPU6050_RANGE_4G
+#define _MPU_ACCEL_RANGE MPU6050_RANGE_2G
+// #define _MPU_ACCEL_RANGE MPU6050_RANGE_4G
 // #define _MPU_ACCEL_RANGE MPU6050_RANGE_8G
 // #define _MPU_ACCEL_RANGE MPU6050_RANGE_16G
 
@@ -26,9 +26,16 @@ class Gyro : public MPU6050
 
         Gyro() : MPU6050() {}
 
-        void attach(int address)
+        void attach(int address, float multiplier)
         {
-            _ready = MPU6050::begin(_MPU_GYRO_RANGE, _MPU_ACCEL_RANGE, address);
+            ready = MPU6050::begin(_MPU_GYRO_RANGE, _MPU_ACCEL_RANGE, address);
+            _multiplier = multiplier;
+            if (!ready)
+            {
+                Serial.println(" <!> gyroscope error");
+                return;
+            }
+
             #ifdef _MPU_CALIBRATE
             MPU6050::calibrateGyro();
             #endif
@@ -36,15 +43,21 @@ class Gyro : public MPU6050
 
         void tick()
         {
-            if((millis() - _gyroTimer) > _MPU_GYRO_PERIOD_S) {
+            if (!ready) return;
+
+            if((millis() - _gyroTimer) > _MPU_GYRO_PERIOD_MS) {
                 _gyroTimer = millis();
 
                 // центральный
                 Vector normalized = MPU6050::readNormalizeGyro();
 
-                pitch += normalized.YAxis * _MPU_GYRO_PERIOD_S;
-                roll += normalized.XAxis * _MPU_GYRO_PERIOD_S;
-                yaw += normalized.ZAxis * _MPU_GYRO_PERIOD_S;
+                _pitch += normalized.YAxis * _MPU_GYRO_PERIOD_S;
+                _roll += normalized.XAxis * _MPU_GYRO_PERIOD_S;
+                _yaw += normalized.ZAxis * _MPU_GYRO_PERIOD_S;
+
+                pitch = _pitch * _multiplier;
+                roll = _roll * _multiplier;
+                yaw = _yaw * _multiplier;
 
             }
         }
@@ -53,9 +66,14 @@ class Gyro : public MPU6050
         float roll = 0;
         float yaw = 0;
 
+        bool ready;
+
     private:
-        bool _ready;
+        float _pitch = 0;
+        float _roll = 0;
+        float _yaw = 0;
         uint32_t _gyroTimer = millis();
+        float _multiplier = 1;
 
 };
 
