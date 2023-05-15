@@ -4,10 +4,7 @@
 #include <Arduino.h>
 #include "src/MPU6050/MPU6050.h"
 
-// #define _MPU_GYRO_PERIOD_MS 50
-// #define _MPU_GYRO_PERIOD_S 0.05
 #define _MPU_GYRO_PERIOD_MS 200
-// #define _MPU_GYRO_PERIOD_S 0.1
 #define _MPU_CALIBRATE
 
 // чувствительность акселерометра, меньше = точнее
@@ -49,8 +46,6 @@ class Gyro : public MPU6050
 
             if((millis() - _gyroTimer) > _MPU_GYRO_PERIOD_MS) {
                 
-
-                // центральный
                 Vector normalized = MPU6050::readNormalizeGyro();
                 float dt = (float)(millis() - _gyroTimer) / 1000.00;
 
@@ -58,15 +53,11 @@ class Gyro : public MPU6050
                 _roll += normalized.XAxis * dt;
                 _yaw += normalized.ZAxis * dt;
 
-                // pitch = _pitch * _multiplier;
-                // pitch = _pitch * 1;
+                pitch = _pitch * _multiplier;
                 roll = _roll * _multiplier;
-                // roll = _roll * 1;
                 yaw = _yaw * _multiplier;
-                // yaw = _yaw * 1;
 
                 _gyroTimer = millis();
-
             }
         }
 

@@ -27,16 +27,18 @@ let motors = {
 };
 
 function encodeBtn() {
-  if (buttons.top) return 'b1';
-  else if (buttons.bottom) return 'b2';
-  else if (buttons.left) return 'b3';
-  else if (buttons.right) return 'b4';
-  else return 'b0';
+  if (buttons.top) return '<action:w>';
+  else if (buttons.bottom) return '<action:s>';
+  else if (buttons.left) return '<action:a>';
+  else if (buttons.right) return '<action:d>';
+  else return false;
+  // else return 'b0';
 }
 
 function pressBtn(btn, state) {
   if (buttons.hasOwnProperty(btn)) buttons[btn] = Boolean(state);
   let cmd = encodeBtn();
+  if (cmd === false) return;
   websocket.send(cmd);
   isWaitForResponse = true;
   waitForResponseInterval = setInterval(
@@ -106,15 +108,15 @@ function parseString(str) {
       const $elem = document.querySelector('.indicator-center .text-indicator');
       $elem.innerText = `${numeric} deg`;
     }
-    if (key == 'FBL') {
+    if (key == 'x') {
       motors.left = numeric;
       const $elem = document.querySelector('.indicator-fbl .text-indicator');
-      $elem.innerText = `FBL: ${numeric} deg`;
+      $elem.innerText = `x: ${numeric} deg`;
     }
-    if (key == 'FBR') {
+    if (key == 'y') {
       motors.right = numeric;
       const $elem = document.querySelector('.indicator-fbr .text-indicator');
-      $elem.innerText = `FBR: ${numeric} deg`;
+      $elem.innerText = `y: ${numeric} deg`;
     }
     if (key == 'SF') {
       const $elem = document.querySelector('.indicator-top .text-indicator');
@@ -183,24 +185,6 @@ function wsOnMessage(event) {
   greenText();
   console.log(event.data);
   parseString(event.data);
-  // json(event.data)
-  //   .then((jsonData) => {
-  //     if (jsonData.msgType == 'feedback') {
-  //       gyroscope.pitch = jsonData?.pitch;
-  //       gyroscope.roll = jsonData?.roll;
-  //       gyroscope.yaw = jsonData?.yaw;
-  //       motors.left = jsonData?.motLeft;
-  //       motors.right = jsonData?.motRight;
-  //     }
-  //     if (jsonData.msgType == 'map') {
-  //       if (jsonData.hasOwnProperty('points')) {
-  //         addMapPoints(jsonData.points);
-  //       }
-  //     }
-  //   })
-  //   .catch((exc) => {
-  //     //
-  //   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

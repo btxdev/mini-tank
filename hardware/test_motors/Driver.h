@@ -4,8 +4,6 @@
 #include "Arduino.h"
 #include "Motor.h"
 
-// #define _DRV_ROT_MM 140
-// #define _DRV_ROT_MM 165
 #define _DRV_ROT_MM 145
 #define _DRV_MOVE_MM 300
 
@@ -36,8 +34,6 @@ class Driver
         void attach(int leftOutput, int leftFeedback, float leftMultiplier,
                     int rightOutput, int rightFeedback, float rightMultiplier)
         {
-            // _leftSpeedMultiplier = leftMultiplier;
-            // _rightSpeedMultiplier = rightMultiplier;
             leftMotor.attach(leftOutput, leftFeedback);
             rightMotor.attach(rightOutput, rightFeedback);
             leftMotor.speedMultiplier = leftMultiplier;
@@ -55,8 +51,6 @@ class Driver
         {
             _speed = speed;
 
-            // leftMotor.setMaxSpeed(speed * _leftSpeedMultiplier);
-            // rightMotor.setMaxSpeed(speed * _rightSpeedMultiplier);
             leftMotor.setMaxSpeed(speed);
             rightMotor.setMaxSpeed(speed);
         }
@@ -91,7 +85,6 @@ class Driver
             useMultiplier(true);
             if (leftMotor.waFlag)
             {
-                // rightMotor.writeSpeed(-_speed * _rightSpeedMultiplier);
                 rightMotor.writeSpeed(-_speed);
             }
             else
@@ -118,7 +111,6 @@ class Driver
             useMultiplier(true);
             if (leftMotor.waFlag)
             {
-                // rightMotor.writeSpeed(_speed * _rightSpeedMultiplier);
                 rightMotor.writeSpeed(_speed);
             }
             else
@@ -161,7 +153,6 @@ class Driver
             {
                 if (leftMotor.waFlag)
                 {
-                    // rightMotor.writeSpeed(-_speed * _rightSpeedMultiplier);
                     rightMotor.writeSpeed(-_speed);
                 }
                 else
@@ -175,7 +166,6 @@ class Driver
             {
                 if (leftMotor.waFlag)
                 {
-                    // rightMotor.writeSpeed(_speed * _rightSpeedMultiplier);
                     rightMotor.writeSpeed(_speed);
                 }
                 else
@@ -202,26 +192,6 @@ class Driver
                 if (_state == _DRVST_MBACKWARD) PID *= -1;
                 leftMotor.speedMultiplier = 1.00 + PID * 0.1;
                 rightMotor.speedMultiplier = 1.00 - PID * 0.1;
-                // rightMotor.speedMultiplier = 0;
-                // rightMotor.useMultiplier = true;
-                // leftMotor.setMaxSpeed(_leftSpeedMultiplier + PID * 0.1);
-                // rightMotor.setMaxSpeed(_rightSpeedMultiplier - PID * 0.1);
-                // _rightSpeedMultiplier = 1.00 - PID / 2;
-                // _yaw_i = _yaw_i * 0.5 + _actualYaw;
-                // float d = _yaw_d * _kd;
-                // _yaw_d = _actualYaw;
-                // Serial.print("error: ");
-                // Serial.print(error);
-                // Serial.print(", p: ");
-                // Serial.print(proportional);
-                // Serial.print(", i: ");
-                // Serial.print(_PID_integral);
-                // Serial.print(", d: ");
-                // Serial.print(derivative);
-                // Serial.print(", PID: ");
-                // Serial.print(PID);
-                // Serial.println();
-                // Serial.println(rightMotor.useMultiplier);
             }
 
             if (_state == _DRVST_DELAY)
@@ -308,9 +278,6 @@ class Driver
         uint32_t _delayTimer = millis();
         uint16_t _delayTime = 1000;
 
-        // float _leftSpeedMultiplier = 1;
-        // float _rightSpeedMultiplier = 1;
-
         bool _gyroAttached = false;
         float _actualYaw = 0;
         float _previousYaw = 0;
@@ -321,7 +288,6 @@ class Driver
         float _ki = 0;
         float _kd = 0;
         float _PID_integral = 0;
-        // float _yaw_d = 0;
 };
 
 #endif

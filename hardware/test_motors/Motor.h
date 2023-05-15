@@ -59,7 +59,6 @@ class Motor : public AmperkaServo
                 degrees += diff;
                 _prevAngle = rawAngle;
                 _angleTimer = millis();
-                // Serial.println(degrees);
             }
 
             if (waFlag)
@@ -70,22 +69,7 @@ class Motor : public AmperkaServo
                 if (degrees > targetAngle) direction = -1;
                 float speed = abs(_maxSpeed) * direction;
                 if (useMultiplier) speed *= speedMultiplier;
-                // speed = abs(_maxSpeed) * direction * 2.55;
-                // uint8_t fadeAngle = 90;
-                // if (abs(distance) < fadeAngle)
-                // {
-                //     speed *= (abs(distance) / fadeAngle);
-                // }
-                // else if (abs(degrees - _waPrevAngle) < fadeAngle)
-                // {
-                //     speed *= (abs(degrees - _waPrevAngle) / fadeAngle);
-                // }
-                // int8_t minSpeed = 30;
-                // if (abs(speed) < minSpeed)
-                // {
-                //     speed = minSpeed * direction;
-                // } 
-                // else abs(_maxSpeed) * direction * 2.55;
+
                 AmperkaServo::writeSpeed(speed);
                 if(abs(distance) < 10)
                 {
@@ -95,11 +79,6 @@ class Motor : public AmperkaServo
             }
             else
             {
-                //  !!!!!!!!
-                // float multiplier = 1;
-                // if (useMultiplier) multiplier = speedMultiplier;
-                // float newSpeed = (float)_speed * 2.55 * multiplier;
-                // AmperkaServo::writeSpeed(newSpeed);
                 Motor::writeSpeed(_speed);
             }
         }
