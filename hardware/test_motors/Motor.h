@@ -69,6 +69,7 @@ class Motor : public AmperkaServo
                 int8_t direction = 1;
                 if (degrees > targetAngle) direction = -1;
                 float speed = abs(_maxSpeed) * direction;
+                if (useMultiplier) speed *= speedMultiplier;
                 // speed = abs(_maxSpeed) * direction * 2.55;
                 // uint8_t fadeAngle = 90;
                 // if (abs(distance) < fadeAngle)
@@ -94,8 +95,21 @@ class Motor : public AmperkaServo
             }
             else
             {
-                AmperkaServo::writeSpeed(_speed * 2.55);
+                //  !!!!!!!!
+                // float multiplier = 1;
+                // if (useMultiplier) multiplier = speedMultiplier;
+                // float newSpeed = (float)_speed * 2.55 * multiplier;
+                // AmperkaServo::writeSpeed(newSpeed);
+                Motor::writeSpeed(_speed);
             }
+        }
+
+        void writeSpeed(float speed)
+        {
+            float multiplier = 1;
+            if (useMultiplier) multiplier = speedMultiplier;
+            float newSpeed = (float)speed * 2.55 * multiplier;
+            AmperkaServo::writeSpeed(newSpeed);
         }
 
         void writeAngle(int16_t angle)
@@ -132,6 +146,9 @@ class Motor : public AmperkaServo
             _speed = 0;
             AmperkaServo::writeSpeed(0);
         }
+
+        float speedMultiplier = 1;
+        bool useMultiplier = false;
     
     private:
         uint8_t _feedbackPin;

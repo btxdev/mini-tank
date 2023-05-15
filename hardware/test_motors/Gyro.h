@@ -4,15 +4,17 @@
 #include <Arduino.h>
 #include "src/MPU6050/MPU6050.h"
 
-#define _MPU_GYRO_PERIOD_MS 50
-#define _MPU_GYRO_PERIOD_S 0.05
+// #define _MPU_GYRO_PERIOD_MS 50
+// #define _MPU_GYRO_PERIOD_S 0.05
+#define _MPU_GYRO_PERIOD_MS 200
+// #define _MPU_GYRO_PERIOD_S 0.1
 #define _MPU_CALIBRATE
 
 // чувствительность акселерометра, меньше = точнее
-#define _MPU_ACCEL_RANGE MPU6050_RANGE_2G
+// #define _MPU_ACCEL_RANGE MPU6050_RANGE_2G
 // #define _MPU_ACCEL_RANGE MPU6050_RANGE_4G
 // #define _MPU_ACCEL_RANGE MPU6050_RANGE_8G
-// #define _MPU_ACCEL_RANGE MPU6050_RANGE_16G
+#define _MPU_ACCEL_RANGE MPU6050_RANGE_16G
 
 // лимит гироскопа (deg/s)
 #define _MPU_GYRO_RANGE MPU6050_SCALE_250DPS
@@ -46,18 +48,24 @@ class Gyro : public MPU6050
             if (!ready) return;
 
             if((millis() - _gyroTimer) > _MPU_GYRO_PERIOD_MS) {
-                _gyroTimer = millis();
+                
 
                 // центральный
                 Vector normalized = MPU6050::readNormalizeGyro();
+                float dt = (float)(millis() - _gyroTimer) / 1000.00;
 
-                _pitch += normalized.YAxis * _MPU_GYRO_PERIOD_S;
-                _roll += normalized.XAxis * _MPU_GYRO_PERIOD_S;
-                _yaw += normalized.ZAxis * _MPU_GYRO_PERIOD_S;
+                _pitch += normalized.YAxis * dt;
+                _roll += normalized.XAxis * dt;
+                _yaw += normalized.ZAxis * dt;
 
-                pitch = _pitch * _multiplier;
+                // pitch = _pitch * _multiplier;
+                // pitch = _pitch * 1;
                 roll = _roll * _multiplier;
+                // roll = _roll * 1;
                 yaw = _yaw * _multiplier;
+                // yaw = _yaw * 1;
+
+                _gyroTimer = millis();
 
             }
         }
