@@ -1,81 +1,43 @@
-#include "Motor.h"
-#include "src/Timer/timer.h"
-#include "src/Timer/timerManager.h"
+#include "Driver.h"
 
 
 // серво настройки
 #define LEFT_SERVO_PIN 2
 #define LEFT_SERVO_PIN_FB A14
+#define LEFT_SERVO_K 0.85
 
 #define RIGHT_SERVO_PIN 3
 #define RIGHT_SERVO_PIN_FB A15
+#define RIGHT_SERVO_K 1.15
 
 
-Motor leftServo;
-Motor rightServo;
-
-Timer frame1Timer;
-// Timer frame2Timer;
-
-
-void frame1()
-{
-    leftServo.writeDistance(155);
-}
-
-// void frame2()
-// {
-//     leftServo.writeAngle(-90);
-//     rightServo.writeAngle(-90);
-// }
-// Timer rotateTimer;
-
-
-// void rotateCallback()
-// {
-//     leftServo.writeAngle(180);
-//     // Serial.println(leftServo.degrees);
-//     // Serial.println(analogRead(LEFT_SERVO_PIN_FB));
-//     // Serial.println(leftServo.readVoltageFB());
-//     // Serial.println(leftServo.degrees);
-// }
+Driver driver;
+String taskQueue = "w_a_w_d_w_d_d_w_a_w_d_w_";
+// String taskQueue = "a_d_d_a___aa_dd";
 
 
 void setup()
 {
     Serial.begin(115200);
 
-    // pinMode(LEFT_SERVO_PIN_FB, INPUT);
-    leftServo.attach(LEFT_SERVO_PIN, LEFT_SERVO_PIN_FB);
-    rightServo.attach(RIGHT_SERVO_PIN, RIGHT_SERVO_PIN_FB);
-    leftServo.setMaxSpeed(70);
-    rightServo.setMaxSpeed(70);
+    driver.attach(LEFT_SERVO_PIN, LEFT_SERVO_PIN_FB, LEFT_SERVO_K, 
+                  RIGHT_SERVO_PIN, RIGHT_SERVO_PIN_FB, RIGHT_SERVO_K);
+    driver.setSpeed(70);
 
-    frame1Timer.setTimeout(4000);
-    frame1Timer.setCallback(frame1);
-
-    // frame2Timer.setTimeout(20000);
-    // frame2Timer.setCallback(frame2);
-
-    // rotateTimer.setInterval(8000);
-    // rotateTimer.setInterval(50);
-    // rotateTimer.setCallback(rotateCallback);
-    // rotateTimer.start();
-
-    TimerManager::instance().start();
+    delay(4000);
 }
 
 void loop()
 {
-    TimerManager::instance().update();
-    leftServo.tick();
-    rightServo.tick();
-    if (leftServo.waFlag)
-    {
-        rightServo.writeSpeed(70);
-    }
-    else
-    {
-        rightServo.writeSpeed(0);
-    }
+    driver.tick();
+
+    if (!driver.isReady()) return;
+    if (taskQueue.length() == 0) return;
+    char task = taskQueue[0];
+    taskQueue.remove(0, 1);
+    if (task == 'w') driver.moveForward();
+    if (task == 'a') driver.turnLeft();
+    if (task == 's') driver.moveBackward();
+    if (task == 'd') driver.turnRight();
+    if (task == '_') delay(1000);
 }
