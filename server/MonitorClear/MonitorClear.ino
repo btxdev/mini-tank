@@ -13,8 +13,8 @@ const int mapRows = 6;
 const int mapCols = 6;
 
 // const char *monitorServerIP = "192.168.43.176";
-const char *phoneSSID = "HONOR 20";
-const char *phonePASSWORD = "12344321";
+const char *phoneSSID = "RT-GPON-E150";
+const char *phonePASSWORD = "5qEg26eS";
 const char *universalPassword = "123456789";
 const char *messageType[] {
   "",
@@ -25,7 +25,7 @@ const char *messageType[] {
   "/printmap"
 };
 
-const String serverURL = "http://192.168.43.176/UnitMonitor/mapTest.php";
+const String serverURL = "http://192.168.0.2/mapTest.php";
 
 std::array<String, mapListSize> mapList;
 std::array<int, mapListSize> unitSteps;
@@ -51,8 +51,8 @@ enum ResponseCode {
 };
 
 String makeIP(uint8_t ID) {
-  String IP = "192.168.1.";
-  IP += String(ID);
+  String IP = "192.168.0.";
+  IP += String(ID + 100);
   return IP;
 }
 

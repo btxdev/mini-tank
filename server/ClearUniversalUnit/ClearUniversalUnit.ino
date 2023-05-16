@@ -314,8 +314,8 @@ bool mapValid(const String &map1D) {
 /*-----------------------------------------------------------------------------------------CLIENT_CODE-----------------------------*/
 
 String makeIP(uint8_t ID) {
-  String IP = "192.168.1.";
-  IP += String(ID);
+  String IP = "192.168.0.";
+  IP += String(ID + 100);
   return IP;
 }
 
