@@ -71,6 +71,8 @@ void setDrivingCondition(bool condition);
 
 void setup()
 {
+    delay(500);
+
     Serial.begin(115200);
     Serial1.begin(115200);
     Serial2.begin(115200);
@@ -80,20 +82,26 @@ void setup()
     pinMode(OPEN_WRITING_OUTPUT, OUTPUT);
     pinMode(DRIVING_CONDITION_OUTPUT, OUTPUT);
 
+    // если гироскопы сломались и нужно ехать/поворачивать по градусам
     // driver.attach(LEFT_SERVO_PIN, LEFT_SERVO_PIN_FB, LEFT_SERVO_K, 
     //               RIGHT_SERVO_PIN, RIGHT_SERVO_PIN_FB, RIGHT_SERVO_K);
     driver.attach(LEFT_SERVO_PIN, LEFT_SERVO_PIN_FB, 
                   RIGHT_SERVO_PIN, RIGHT_SERVO_PIN_FB);
+    // основная скорость для моторов
     driver.setSpeed(80);
     driver.usePID(true, 0.8, 0, 0);
 
+    // коэффициент для угла гироскопа (не накопительный)
     frontGyro.attach(0x68, 1.065);
     centerGyro.attach(0x69, 1.097);
 
+    // по двум
     bool allGyroReady = frontGyro.ready && centerGyro.ready;
+    // по одному
+    // bool allGyroReady = frontGyro.ready;
     driver.useGyro(allGyroReady);
 
-    delay(1000);
+    delay(500);
 }
 
 void loop()
@@ -102,17 +110,32 @@ void loop()
     centerGyro.tick();
     driver.tick();
 
+    // по двум
     float yaw = (frontGyro.yaw + centerGyro.yaw) / 2;
+    // по одному
+    // float yaw = frontGyro.yaw;
     driver.sendYaw(yaw);
+    // для отладки коэфов гироскопа через плоттер
+    // Serial.print("front: ");
+    // Serial.print(frontGyro.yaw);
+    // Serial.print(", center: ");
+    // Serial.print(centerGyro.yaw);
+    // Serial.print(", mean: ");
+    // Serial.print(yaw);
+    // Serial.println();
+    // return;
 
+    // координаты танка
     static uint8_t xCell = 0;
     static uint8_t yCell = 0;
     static int8_t direction = 0;
 
+    // таймеры для отправки на ESP
     static uint32_t output1Timer = millis();
     static uint32_t output2Timer = millis();
     static uint32_t output2Timer2 = millis();
 
+    // препятствия
     const uint32_t sonarFrontDistance = sonarFront.ping_cm();
     const uint32_t sonarBackDistance = sonarBack.ping_cm();
     const uint32_t sonarLeftDistance = sonarLeft.ping_cm();
@@ -126,8 +149,10 @@ void loop()
     // готов читать команду и пришли данные с ESP (controller)
     if (!unitConditionServer() && Serial1.available() && driver.isReady())
     {
+        // читаем в этот раз сразу строкой
         String task = Serial1.readString().substring(0, 10);
-        Serial.println(task);
+        // Serial.println(task);
+        // коды WASD
         if (task == "<action:w>")
         {
             driver.moveForward();

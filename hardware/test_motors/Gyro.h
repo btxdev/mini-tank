@@ -4,7 +4,9 @@
 #include <Arduino.h>
 #include "src/MPU6050/MPU6050.h"
 
+// лучше не менять
 #define _MPU_GYRO_PERIOD_MS 200
+// закоментить если не нужна калибровка при старте
 #define _MPU_CALIBRATE
 
 // чувствительность акселерометра, меньше = точнее
